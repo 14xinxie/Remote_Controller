@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">温控风扇</string>
+    <string name="about">关于</string>
+    <string name="quit">退出</string>
+</resources>

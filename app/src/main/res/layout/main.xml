@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!--第一个直接子控件，是主屏幕中显示的内容-->
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <ScrollView
+                android:id="@+id/weather_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    >
+
+                    <include layout="@layout/toolbar"/>
+                    <fragment
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/weather_fragment"
+                        android:name="com.example.xinxie.remote_conroller.WeatherFragment"
+                        />
+
+                    <fragment
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/controll_fragment"
+                        android:name="com.example.xinxie.remote_conroller.ControllFragment"
+                        />
+
+
+
+                </LinearLayout>
+
+            </ScrollView>
+
+        </android.support.v4.widget.SwipeRefreshLayout>
+
+        <!--第二个直接子控件
+            用于作为滑动菜单中显示的内容
+            该直接子控件为一个自定义的fragment
+         -->
+        <fragment
+            android:id="@+id/choose_area_fragment"
+            android:name="com.example.xinxie.remote_conroller.ChooseAreaFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            />
+        <!--android:layout_gravity="start"
+            表示滑动菜单在左边，滑动菜单从左往右滑出
+        -->
+
+    </android.support.v4.widget.DrawerLayout>
+
+
+</LinearLayout>

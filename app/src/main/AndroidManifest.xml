@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.xinxie.remote_conroller">
+
+    <!--网络连接-->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!--Wifi网络状态-->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!--网络状态-->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--网络定位-->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!--GPS定位-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!--使用蓝牙-->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <!--蓝牙管理-->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <!--挂载文件系统-->
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <!--写入外部存储-->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+
+    <!--任何一个项目只能配置一个Application-->
+
+    <application
+        android:name="com.example.xinxie.remote_conroller.util.MyApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <!--android:name="com.example.xinxie.remote_conroller.Util.MyApplication"
+            告知系统，当程序启动的时候应该初始化MyApplication类，而不是默认的Application类
+        -->
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".AboutActivity"
+            android:label="说明"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:icon="@drawable/light"
+            />
+
+        <activity
+            android:name=".DeviceListActivity"
+            android:label="选取连接设备"
+            android:theme="@android:style/Theme.Holo.Light.Dialog"
+            android:configChanges="orientation|keyboardHidden"
+            />
+
+
+
+
+        <!--百度地图SDK开发配置-->
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="snCDao3GFnIgu589ISClgcF8Kh5NIaLy"
+            />
+        <service
+            android:name="com.baidu.location.f"
+            android:enabled="true"
+            android:process=":remote"
+            />
+    </application>
+
+</manifest>
