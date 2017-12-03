@@ -187,6 +187,7 @@ public class WeatherFragment extends Fragment {
     public void requestWeather(final String weatherId) {
 
         final MainActivity activity = (MainActivity) getActivity();
+        final Weather weather;
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
 //        String weatherUrl = "https://api.heweather.com/s6/weather?cityid=" + weatherId + "&key=5d7f57103cd143649ff6713456e274d0";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
@@ -194,6 +195,7 @@ public class WeatherFragment extends Fragment {
             public void onResponse(Call call, Response response) throws IOException {
                 final String responseText = response.body().string();
                 final Weather weather = Utility.handleWeatherResponse(responseText,"id");
+
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -229,6 +231,7 @@ public class WeatherFragment extends Fragment {
                 });
             }
         });
+
         //loadBingPic();
     }
 
@@ -244,6 +247,7 @@ public class WeatherFragment extends Fragment {
         //String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
         String weatherUrl="https://free-api.heweather.com/v5/weather?city="+latitude+","+longitude+"&key=5d7f57103cd143649ff6713456e274d0";
 //        String weatherUrl = "https://api.heweather.com/s6/weather?cityid=" + weatherId + "&key=5d7f57103cd143649ff6713456e274d0";
+
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
@@ -257,6 +261,7 @@ public class WeatherFragment extends Fragment {
                             editor.putString("weather", responseText);
                             editor.apply();
                             mWeatherId = weather.basic.weatherId;
+                            //mPictureUrl=weather.now.more.pictureId;
                             //weather.now.more.pictureId;
 
                             showWeatherInfo(weather);
