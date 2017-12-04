@@ -1,8 +1,6 @@
 package com.example.xinxie.remote_conroller;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -20,7 +18,6 @@ import com.example.xinxie.remote_conroller.db.City;
 import com.example.xinxie.remote_conroller.db.County;
 import com.example.xinxie.remote_conroller.db.Province;
 import com.example.xinxie.remote_conroller.util.HttpUtil;
-import com.example.xinxie.remote_conroller.util.ToastUtil;
 import com.example.xinxie.remote_conroller.util.Utility;
 
 import org.litepal.crud.DataSupport;
@@ -28,7 +25,6 @@ import org.litepal.crud.DataSupport;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadFactory;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -265,7 +261,7 @@ public class ChooseAreaFragment extends Fragment {
      * 根据传入的地址和类型从服务器上查询省市县数据。
      */
     public void queryFromServer(String address, final String type) {
-        showProgressDialog();
+        Utility.showProgressDialog();
         HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
@@ -284,7 +280,7 @@ public class ChooseAreaFragment extends Fragment {
                         @Override
                         public void run() {
 
-                            closeProgressDialog();
+                            Utility.closeProgressDialog();
                             if ("province".equals(type)) {
                                 queryProvinces();
                             } else if ("city".equals(type)) {
@@ -306,7 +302,7 @@ public class ChooseAreaFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        closeProgressDialog();
+                        Utility.closeProgressDialog();
                         Toast.makeText(getContext(), "加载失败", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -314,113 +310,6 @@ public class ChooseAreaFragment extends Fragment {
         });
     }
 
-    /**
-     * 显示进度对话框
-     */
-    private void showProgressDialog() {
-        if (progressDialog == null) {
-            progressDialog = new ProgressDialog(getActivity());
-            progressDialog.setMessage("正在加载...");
-            progressDialog.setCanceledOnTouchOutside(false);
-        }
-        progressDialog.show();
-    }
-
-    /**
-     * 关闭进度对话框
-     */
-    private void closeProgressDialog() {
-        if (progressDialog != null) {
-            progressDialog.dismiss();
-        }
-    }
-
-
-    /**
-     * 根据当前的城市名和县区名获取当前县区的代号
-     * @param cityName
-     * @param countyName
-     * @return
-     */
-    public String getCurrentWeatherId(String provinceName,String cityName,String countyName){
-
-        String weatherId=null;
-        int cityCode=0;
-        int provinceCode=0;
-        //查询数据库中所有的省份
-        List<Province> proList=DataSupport.findAll(Province.class);
-
-        //如果数据库中没有存储省份信息,
-        //则从和风天气服务器中获取并存入数据库中
-        //然后再查询数据库
-        if(proList.size()==0){
-            String address = "http://guolin.tech/api/china";
-            queryFromServer(address, "province");
-            proList=DataSupport.findAll(Province.class);
-        }
-
-        //获取当前的省份的代号
-        for(int i=0;i<proList.size();i++){
-            if(provinceName.equals(proList.get(i).getProvinceName())){
-                provinceCode=proList.get(i).getProvinceCode();
-                selectedProvince=proList.get(i);
-                break;
-            }
-        }
-
-
-        //查询数据库中当前省份下所有的城市
-        List<City> citList=DataSupport.where("provinceId=?",String.valueOf(selectedProvince.getId())).find(City.class);
-        //如果数据库中没有存储当前省份下的城市信息,
-        //则从和风天气服务器中获取并存入数据库中
-        //然后再查询数据库
-        if(citList.size()==0) {
-            String address = "http://guolin.tech/api/china/" + provinceCode;
-            queryFromServer(address, "city");
-            citList=DataSupport.where("provinceId=?",String.valueOf(selectedProvince.getId())).find(City.class);
-        }
-
-        //获取当前城市的代号
-        for (int i=0;i<citList.size();i++) {
-            if (cityName.equals(citList.get(i).getCityName())) {
-                cityCode = citList.get(i).getCityCode();
-                selectedCity=citList.get(i);
-                break;
-            }
-        }
-
-
-        //获取当前县区的代号
-        //若当前县区名字在数据库中不存在，则默认为当前城市的第一个县区的代号
-
-        //查询数据库中当前城市下的所有县区
-        List<County> couList=DataSupport.where("cityId=?",String.valueOf(selectedCity.getId())).find(County.class);
-
-        //int i=0;
-        if(couList.size()==0) {
-            String address = "http://guolin.tech/api/china/" + provinceCode + "/" + cityCode;
-            queryFromServer(address, "county");
-            couList=DataSupport.where("cityId=?",String.valueOf(selectedCity.getId())).find(County.class);
-        }
-
-        //int i =0;
-        int m=0;
-        for(int i=0;i<couList.size();i++){
-            //如果在数据库中找到当前县区名字，则获取当前县区的代号，并跳出for循环
-            if(countyName.equals(couList.get(i).getCountyName())){
-                weatherId=couList.get(i).getWeatherId();
-                break;
-            }
-            m++;
-        }
-
-        //判断当前县区名字在数据库中是否存在
-        if(m==couList.size()){
-            weatherId=couList.get(0).getWeatherId();
-        }
-
-        return weatherId;
-    }
 
 
 }

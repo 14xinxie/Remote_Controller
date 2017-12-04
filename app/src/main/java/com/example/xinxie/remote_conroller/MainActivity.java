@@ -36,7 +36,7 @@ import android.widget.Button;
 
 import android.widget.Toast;
 
-import com.example.xinxie.remote_conroller.util.ToastUtil;
+import com.example.xinxie.remote_conroller.util.Utility;
 import com.example.xinxie.remote_conroller.view.TempControlView;
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
     private TempControlView tempControl;
 
     private WeatherFragment weatherFragment;
-
 
     private String weatherId;
 
@@ -161,9 +160,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                WeatherFragment.count=0;
-
-                //ToastUtil.ShowShortToast("定位中....");
+                //重置WeatherFragment中的标志位
+                WeatherFragment.locaWeatherFlag=false;
             }
         });
 
@@ -206,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-                ToastUtil.ShowShortToast("请声明相关的权限！");
+                Utility.ShowShortToast("请声明相关的权限！");
                 return;
             }
         }
@@ -443,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case REQUEST_GPS_ON:
-                ToastUtil.ShowShortToast("设置GPS完成！");
+                Utility.ShowShortToast("设置GPS完成！");
                 break;
             default:break;
         }

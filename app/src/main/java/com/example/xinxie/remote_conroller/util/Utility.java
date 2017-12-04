@@ -1,6 +1,8 @@
 package com.example.xinxie.remote_conroller.util;
 
+import android.app.ProgressDialog;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 
 import com.example.xinxie.remote_conroller.db.City;
@@ -13,8 +15,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+/**
+ * 工具类
+ */
 public class Utility {
 
+
+    private static ProgressDialog progressDialog;
     /**
      * 解析和处理服务器返回的省级数据
      * 并将解析处理完的数据存储到LitePal数据库中
@@ -89,18 +97,15 @@ public class Utility {
     /**
      * 将返回的JSON数据解析成Weather实体类
      */
-    public static Weather handleWeatherResponse(String response,String type) {
+    public static Weather handleWeatherResponse(String response) {
 
 
         try {
             JSONArray jsonArray=null;
             JSONObject jsonObject = new JSONObject(response);
             //根据传入的type字段判断，进行相应的字段解析
-            if("id".equals(type)){
-                jsonArray = jsonObject.getJSONArray("HeWeather");
-            }else if("location".equals(type)){
-                jsonArray = jsonObject.getJSONArray("HeWeather5");
-            }
+
+            jsonArray = jsonObject.getJSONArray("HeWeather");
 
             String weatherContent = jsonArray.getJSONObject(0).toString();
             return new Gson().fromJson(weatherContent, Weather.class);
@@ -110,8 +115,47 @@ public class Utility {
         return null;
     }
 
+    /**
+     * Toast短时间显示
+     * @param s
+     */
+    public static void ShowShortToast(String s){
+
+        Toast.makeText(MyApplication.getContext(),s,Toast.LENGTH_SHORT).show();
+
+    }
+
+    /**
+     * Toast长时间显示
+     * @param s
+     */
+    public static void ShowLongToast(String s){
+
+        Toast.makeText(MyApplication.getContext(),s,Toast.LENGTH_LONG).show();
+
+    }
 
 
+    /**
+     * 显示进度对话框
+     */
+    public static void showProgressDialog() {
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(MyApplication.getContext());
+            progressDialog.setMessage("正在加载...");
+            progressDialog.setCanceledOnTouchOutside(false);
+        }
+        progressDialog.show();
+    }
+
+    /**
+     * 关闭进度对话框
+     */
+    public static void closeProgressDialog() {
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+        }
+    }
 
 
 }

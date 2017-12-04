@@ -15,7 +15,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.example.xinxie.remote_conroller.R;
-import com.example.xinxie.remote_conroller.util.ToastUtil;
 
 /**
  * Created by 14292 on 2017-11-24.
