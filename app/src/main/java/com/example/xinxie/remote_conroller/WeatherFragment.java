@@ -1,13 +1,11 @@
 package com.example.xinxie.remote_conroller;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,9 +23,7 @@ import com.example.xinxie.remote_conroller.util.HttpUtil;
 import com.example.xinxie.remote_conroller.util.MyApplication;
 import com.example.xinxie.remote_conroller.util.JsonUtil;
 import com.example.xinxie.remote_conroller.util.PromptUtil;
-
 import org.greenrobot.eventbus.EventBus;
-
 import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.Callback;
