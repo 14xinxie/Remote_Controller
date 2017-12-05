@@ -6,9 +6,8 @@ import android.content.Context;
 import org.litepal.LitePal;
 
 /**
- *
+ * 获取全局context的工具类
  * 自定义一个用于获取全局context的Application类
- * Created by 14292 on 2017-11-16.
  */
 public class MyApplication extends Application {
 

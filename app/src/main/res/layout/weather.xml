@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+
+<!--FrameLayout帧布局，所有的控件默认摆放在布局的左上角-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#ffffff">
+
+    <ImageView
+        android:id="@+id/bing_pic_img"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop" />
+
 
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/drawer_layout"
@@ -27,24 +37,12 @@
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    >
+                    android:fitsSystemWindows="true">
 
-                    <include layout="@layout/toolbar"/>
-                    <fragment
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/weather_fragment"
-                        android:name="com.example.xinxie.remote_conroller.WeatherFragment"
-                        />
-
-                    <fragment
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/controll_fragment"
-                        android:name="com.example.xinxie.remote_conroller.ControllFragment"
-                        />
-
-
+                    <include layout="@layout/main_toolbar"/>
+                    <include layout="@layout/title" />
+                    <include layout="@layout/now" />
+                    <include layout="@layout/controller"/>
 
                 </LinearLayout>
 
@@ -69,5 +67,4 @@
 
     </android.support.v4.widget.DrawerLayout>
 
-
-</LinearLayout>
+</FrameLayout>

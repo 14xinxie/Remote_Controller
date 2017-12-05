@@ -31,10 +31,11 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:design:23.1.1'
-    compile files('src/main/jniLibs/BaiduLBS_Android.jar')
+    compile files('src/activity_main/jniLibs/BaiduLBS_Android.jar')
     compile files('libs/okhttp-3.4.1.jar')
     compile files('libs/gson-2.7.jar')
     compile files('libs/glide-3.7.0.jar')
     compile files('libs/litepal-1.4.1.jar')
     compile files('libs/okio-1.13.0.jar')
+    compile 'org.greenrobot:eventbus:3.0.0'
 }

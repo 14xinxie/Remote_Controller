@@ -1,28 +1,34 @@
 package com.example.xinxie.remote_conroller;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.bumptech.glide.Glide;
 import com.example.xinxie.remote_conroller.gson.Weather;
 import com.example.xinxie.remote_conroller.service.AutoUpdateService;
 import com.example.xinxie.remote_conroller.util.HttpUtil;
 import com.example.xinxie.remote_conroller.util.MyApplication;
-import com.example.xinxie.remote_conroller.util.Utility;
-import java.io.IOException;
+import com.example.xinxie.remote_conroller.util.JsonUtil;
+import com.example.xinxie.remote_conroller.util.PromptUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
+import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -32,8 +38,7 @@ import okhttp3.Response;
  */
 public class WeatherFragment extends Fragment {
 
-
-    private static final String TAG = "WeatherFragment";
+    private String TAG="WeatherFragment";
 
     private View view;
 
@@ -52,23 +57,37 @@ public class WeatherFragment extends Fragment {
     //缓存的天气信息的天气ID
     private String mWeatherId;
 
-    //自带下拉刷新功能的控件
-    private SwipeRefreshLayout swipeRefresh;
-
     //位置监听实例
     private MyLocationListener myLocationListener;
 
     private LocationClient mLocationClient = null;
 
-    //ChooseAreaFragment实例
-    private ChooseAreaFragment chooseAreaFragment;
-
     //获取当前位置天气信息的标志位
-    public static boolean locaWeatherFlag = false;
+    //static boolean得默认值为false
+    public static boolean locaWeatherFlag;
+
+    //实时天气状况代码
+    private String mWeatherPictureId;
+
+    //实时天气状况图片
+    private ImageView weatherPicImg;
+
+    private  MainActivity mActivity;
 
 
-    //public static BDLocation location;
-    private String mPictureUrl;
+    /**
+     * 当Fragment与Activity发生关联时调用
+     * 获取MainActivity实例
+     * @param context
+     */
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        this.mActivity=(MainActivity)context;
+
+    }
 
     /**
      * 每次创建、绘制该Fragment的View组件时回调该方法
@@ -84,16 +103,15 @@ public class WeatherFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-
         view = inflater.inflate(R.layout.weather_fragment, container, false);
-        //navButton = (Button) view.findViewById(R.id.nav_button);
         titleCity = (TextView) view.findViewById(R.id.title_city);
         titleUpdateTime = (TextView) view.findViewById(R.id.title_update_time);
         weatherInfoText = (TextView) view.findViewById(R.id.weather_info_text);
         degreeText = (TextView) view.findViewById(R.id.degree_text);
-        //titleCity.setText("上海");
-        //swipeRefresh = (SwipeRefreshLayout) getActivity().findViewById(R.id.swipe_refresh);
-        Log.e("描述：", TAG + "........onCreateView........");
+        weatherPicImg = (ImageView) view.findViewById(R.id.weather_pic_img);
+
+        Log.e(TAG,"onCreateView...");
+
         return view;
     }
 
@@ -109,8 +127,6 @@ public class WeatherFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        //通过id获取ChooseAreaFragment实例
-        chooseAreaFragment = (ChooseAreaFragment) getFragmentManager().findFragmentById(R.id.choose_area_fragment);
         //执行耗时的定位方法
         startLocate();
 
@@ -118,44 +134,41 @@ public class WeatherFragment extends Fragment {
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
             // 有缓存时直接解析天气数据
-            Weather weather = Utility.handleWeatherResponse(weatherString);
+            Weather weather = JsonUtil.handleWeatherResponse(weatherString);
             mWeatherId = weather.basic.weatherId;
             showWeatherInfo(weather);
         } else {
-            // 无缓存时去服务器查询天气
-            //mWeatherId = getActivity().getIntent().getStringExtra("weather_id");
-            //weatherLayout.setVisibility(View.INVISIBLE);
-            //requestWeather(mWeatherId);
-            //count = 0;
+
+            //没有缓存时获取当前位置的天气信息
+            //即设置定位标志位为false,开启定位
+            locaWeatherFlag=false;
 
         }
-
-
-        //Looper.prepare();
-//        ASyncUploadImage as = new ASyncUploadImage();
-//        as.execute("江西","赣州","石城");
-//        currentWeatherId=chooseAreaFragment.getCurrentWeatherId("江西","赣州","石城");
-        // requestWeather(currentWeatherId);
-        Log.e("描述：", TAG + "........onActivityCreated..........");
+        Log.e(TAG,"onActivityCreated...");
 
     }
+
 
     /**
      * 根据天气id请求城市天气信息。
      */
     public void requestWeather(final String weatherId) {
 
-        final MainActivity activity = (MainActivity) getActivity();
-        final Weather weather;
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
-//        String weatherUrl = "https://api.heweather.com/s6/weather?cityid=" + weatherId + "&key=5d7f57103cd143649ff6713456e274d0";
+
+        //使用okhttp的Http框架发出异步请求
+        //当返回响应时才执行Callback中的onResponse方法
+        //但是从发出异步请求到返回响应有一段时间
+        //这一段时间程序继续向下执行
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
+
+
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String responseText = response.body().string();
-                final Weather weather = Utility.handleWeatherResponse(responseText);
+                final Weather weather = JsonUtil.handleWeatherResponse(responseText);
 
-                getActivity().runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
@@ -163,35 +176,46 @@ public class WeatherFragment extends Fragment {
                             editor.putString("weather", responseText);
                             editor.apply();
                             mWeatherId = weather.basic.weatherId;
+                            mWeatherPictureId=weather.now.more.pictureId;
+
+                            //发送mWeatherId给MainActivity
+                            EventBus.getDefault().post(mWeatherId);
+
+                            //加载实时天气状况的图片
+
+                            //网络图片的请求Url
+                            String requestWeatherPic = "https://cdn.heweather.com/cond_icon/"+mWeatherPictureId+".png";
+                            //使用Glide开源框架加载图片
+                            Glide.with(getActivity()).load(requestWeatherPic).into(weatherPicImg);
+
+
                             showWeatherInfo(weather);
                         } else {
-                            //Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
 
-                            Utility.ShowShortToast("获取天气信息失败！");
+                            PromptUtil.showShortToast("获取天气信息失败！");
                         }
-                        //swipeRefresh.setRefreshing(false);
-
-                        activity.swipeRefresh.setRefreshing(false);
-                        //getActivity().
+                        mActivity.swipeRefresh.setRefreshing(false);
                     }
                 });
+
             }
 
             @Override
             public void onFailure(Call call, IOException e) {
+
+
                 e.printStackTrace();
-                getActivity().runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
-                        Utility.ShowShortToast("获取天气信息失败！");
-                        activity.swipeRefresh.setRefreshing(false);
+
+                        PromptUtil.showShortToast("获取天气信息失败！");
+                        mActivity.swipeRefresh.setRefreshing(false);
                     }
                 });
             }
         });
 
-        //loadBingPic();
     }
 
 
@@ -202,14 +226,15 @@ public class WeatherFragment extends Fragment {
      */
     public void requestWeather(final double latitude,final double longitude) {
 
-        final MainActivity activity = (MainActivity) getActivity();
         String weatherUrl = "http://guolin.tech/api/weather?cityid="+latitude+","+longitude+"&key=bc0418b57b2d4918819d3974ac1285d9";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String responseText = response.body().string();
-                final Weather weather = Utility.handleWeatherResponse(responseText);
-                getActivity().runOnUiThread(new Runnable() {
+                final Weather weather = JsonUtil.handleWeatherResponse(responseText);
+
+
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
@@ -217,18 +242,24 @@ public class WeatherFragment extends Fragment {
                             editor.putString("weather", responseText);
                             editor.apply();
                             mWeatherId = weather.basic.weatherId;
-                            mPictureUrl=weather.now.more.pictureId;
-                            //weather.now.more.pictureId;
+                            mWeatherPictureId=weather.now.more.pictureId;
+
+                            //发送mWeatherId给MainActivity
+                            EventBus.getDefault().post(mWeatherId);
+
+                            //加载实时天气状况的图片
+
+                            //网络图片的请求Url
+                            String requestWeatherPic = "https://cdn.heweather.com/cond_icon/"+mWeatherPictureId+".png";
+                            //使用Glide开源框架加载图片
+                            Glide.with(getActivity()).load(requestWeatherPic).into(weatherPicImg);
+
                             showWeatherInfo(weather);
                         } else {
-                            //Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
 
-                            Utility.ShowShortToast("获取天气信息失败！");
+                            PromptUtil.showShortToast("获取天气信息失败！");
                         }
-                        //swipeRefresh.setRefreshing(false);
-
-                        activity.swipeRefresh.setRefreshing(false);
-                        //getActivity().
+                        mActivity.swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -236,17 +267,18 @@ public class WeatherFragment extends Fragment {
             @Override
             public void onFailure(Call call, IOException e) {
                 e.printStackTrace();
-                getActivity().runOnUiThread(new Runnable() {
+
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
 
-                        Utility.ShowShortToast("获取天气信息失败！");
-                        activity.swipeRefresh.setRefreshing(false);
+                        PromptUtil.showShortToast("获取天气信息失败！");
+                        mActivity.swipeRefresh.setRefreshing(false);
                     }
                 });
             }
         });
-        //loadBingPic();
+
     }
 
 
@@ -273,9 +305,9 @@ public class WeatherFragment extends Fragment {
     public void startLocate() {
         mLocationClient = new LocationClient(MyApplication.getContext());     //声明LocationClient类
         myLocationListener = new MyLocationListener();
-        //mLocationClient.registerLocationListener(myLocationListener);    //注册监听函数
         mLocationClient.registerLocationListener(myLocationListener);
         initLocation();
+
         mLocationClient.start();//开启定位
     }
 
@@ -337,27 +369,15 @@ public class WeatherFragment extends Fragment {
         @Override
         public void onReceiveLocation(BDLocation location) {
 
-            Log.e("描述：", TAG + "........onReceiveLocation........");
-
             //使用标志位，设定为只获取一次当前位置的天气信息
-            if(locaWeatherFlag==false){
-                try{
+            if(locaWeatherFlag==false) {
 
-                    Utility.showProgressDialog();
-                    requestWeather(location.getLatitude(),location.getLongitude());
-                }catch (Exception e){
+                requestWeather(location.getLatitude(), location.getLongitude());
+                PromptUtil.showShortToast("定位中...");
+                locaWeatherFlag = true;
 
-                    e.printStackTrace();
-
-                }
-                locaWeatherFlag=true;
             }
 
-             //获取当前县区的代号
-            //currentWeatherId=chooseAreaFragment.getCurrentWeatherId(currentProvinceName,currentCityName,currentCountyName);
-            //使用接口回调技术，将当前天气信息代号currentWeatherId
-            //从当前Fragment传给其关联的Activity
-            //callBackValue.SendMessageValue(currentWeatherId)
         }
     }
 

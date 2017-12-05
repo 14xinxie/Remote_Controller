@@ -47,8 +47,8 @@
         <activity
             android:name=".AboutActivity"
             android:label="说明"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-            android:icon="@drawable/light"
+            android:theme="@style/AppTheme"
+
             />
 
         <activity
@@ -58,10 +58,9 @@
             android:configChanges="orientation|keyboardHidden"
             />
 
-
-
-
-        <!--百度地图SDK开发配置-->
+        <!--百度地图SDK开发配置
+            需要配置开发者申请的Key
+        -->
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="snCDao3GFnIgu589ISClgcF8Kh5NIaLy"

@@ -19,8 +19,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.example.xinxie.remote_conroller.R;
-
 public class DeviceListActivity extends Activity {
 
     // 调试用

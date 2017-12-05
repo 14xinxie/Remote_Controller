@@ -2,7 +2,7 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="50dp"
     android:layout_margin="10dp">
 
     <TextView
@@ -14,6 +14,13 @@
         android:textColor="#000000"
         android:text="多云"
         android:textSize="30sp" />
+    <ImageView
+        android:id="@+id/weather_pic_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_launcher"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="150dp"/>
     <TextView
         android:id="@+id/degree_text"
         android:layout_width="wrap_content"
@@ -24,9 +31,4 @@
         android:textColor="#000000"
         android:textSize="30sp" />
 
-
-
-    <!--
-    android:textColor="#fff"
-    -->
 </RelativeLayout>

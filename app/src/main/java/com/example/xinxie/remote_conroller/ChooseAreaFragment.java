@@ -1,6 +1,5 @@
 package com.example.xinxie.remote_conroller;
 
-import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -12,27 +11,24 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.example.xinxie.remote_conroller.db.City;
 import com.example.xinxie.remote_conroller.db.County;
 import com.example.xinxie.remote_conroller.db.Province;
 import com.example.xinxie.remote_conroller.util.HttpUtil;
-import com.example.xinxie.remote_conroller.util.Utility;
-
+import com.example.xinxie.remote_conroller.util.JsonUtil;
+import com.example.xinxie.remote_conroller.util.PromptUtil;
+import org.greenrobot.eventbus.EventBus;
 import org.litepal.crud.DataSupport;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
 public class ChooseAreaFragment extends Fragment {
 
-    private static final String TAG = "ChooseAreaFragment";
+    private String TAG="ChooseAreaFragment";
 
     public static final int LEVEL_PROVINCE = 0;
 
@@ -40,53 +36,35 @@ public class ChooseAreaFragment extends Fragment {
 
     public static final int LEVEL_COUNTY = 2;
 
-    private ProgressDialog progressDialog;
-
     private TextView titleText;
 
     private Button backButton;
 
     private ListView listView;
 
+
     private ArrayAdapter<String> adapter;
 
+    //ListView中显示的数据
     private List<String> dataList = new ArrayList<>();
 
-    /**
-     * 省列表
-     */
+    //省列表
     private List<Province> provinceList;
 
-    /**
-     * 市列表
-     */
+    //市列表
     private List<City> cityList;
 
-    /**
-     * 县列表
-     */
+    //县列表
     private List<County> countyList;
 
-    /**
-     * 选中的省份
-     */
+    //选中的省份
     private Province selectedProvince;
 
-    /**
-     * 选中的城市
-     */
+    //选中的城市
     private City selectedCity;
 
-    /**
-     * 当前选中的级别
-     */
+    //当前选中的级别
     private int currentLevel;
-
-
-
-
-
-
 
     /**
      * 每次创建、绘制该Fragment的View组件时回调该方法
@@ -108,7 +86,8 @@ public class ChooseAreaFragment extends Fragment {
         adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, dataList);
         listView.setAdapter(adapter);
 
-        Log.e("描述：", TAG+"........onCreateView........");
+
+        Log.e(TAG,"onCreateView...");
         return view;
     }
 
@@ -136,41 +115,25 @@ public class ChooseAreaFragment extends Fragment {
                     //获取当前选中的县区的代号（用于访问和风天气接口获取相应天气信息），
                     String weatherId = countyList.get(position).getWeatherId();
 
-                    //使用接口回调技术，将当前天气信息代号weatherId
-                    //从当前Fragment传给其关联的Activity
-                    //callBackValue.SendMessageValue(weatherId);
-//                    if (getActivity() instanceof MainActivity) {
-//                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
-//                        intent.putExtra("weather_id", weatherId);
-//                        startActivity(intent);
-//                        //结束与ChooseAreaFragment关联的Activity
-//                        getActivity().finish();
-//                    } else if (getActivity() instanceof WeatherActivity) {
-//                        WeatherActivity activity = (WeatherActivity) getActivity();
-//
-//                        //如果当前Activity是WeatherActivity,
-//                        //则隐藏侧滑菜单，并获取选中县区的天气信息，
-//                        //然后刷新主屏幕中的内容
-//                        activity.drawerLayout.closeDrawers();
-//                        activity.swipeRefresh.setRefreshing(true);
-//                        activity.requestWeather(weatherId);
-//                    }
+                    //使用EventBus在Fragment和Activity之间传递参数
+                    //即将当前的天气信息代号weatherId发送MainActivity送给
+                    EventBus.getDefault().post(weatherId);
+
                     MainActivity activity = (MainActivity) getActivity();
 
-                    //如果当前Activity是WeatherActivity,
-                    //则隐藏侧滑菜单，并获取选中县区的天气信息，
-                    //然后刷新主屏幕中的内容
+                    //隐藏侧滑菜单
                     activity.drawerLayout.closeDrawers();
                     activity.swipeRefresh.setRefreshing(true);
-                    //activity.requestWeather(weatherId);
-                    //getActivity().getFragmentManager().get
 
                     //通过id获取WeatherFragment实例
                     WeatherFragment weatherFragment=(WeatherFragment)getFragmentManager().findFragmentById(R.id.weather_fragment);
+                    //获取选中县区的天气信息
                     weatherFragment.requestWeather(weatherId);
                 }
             }
         });
+
+        //侧滑菜单中的返回按钮点击事件
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -185,8 +148,7 @@ public class ChooseAreaFragment extends Fragment {
         //查询所有的省份信息
         queryProvinces();
 
-
-        Log.e("描述：", TAG+"........onActivityCreated........");
+        Log.e(TAG,"onActivityCreated...");
     }
 
     /**
@@ -236,7 +198,6 @@ public class ChooseAreaFragment extends Fragment {
      * 查询选中市内所有的县，优先从数据库查询，如果没有查询到再去服务器上查询。
      */
     private void queryCounties() {
-        //ToastUtil.ShowShortToast("查询中。。。。");
 
         titleText.setText(selectedCity.getCityName());
         backButton.setVisibility(View.VISIBLE);
@@ -261,18 +222,18 @@ public class ChooseAreaFragment extends Fragment {
      * 根据传入的地址和类型从服务器上查询省市县数据。
      */
     public void queryFromServer(String address, final String type) {
-        Utility.showProgressDialog();
+        PromptUtil.showProgressDialog("正在加载...",getActivity());
         HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String responseText = response.body().string();
                     boolean result = false;
                 if ("province".equals(type)) {
-                    result = Utility.handleProvinceResponse(responseText);
+                    result = JsonUtil.handleProvinceResponse(responseText);
                 } else if ("city".equals(type)) {
-                    result = Utility.handleCityResponse(responseText, selectedProvince.getId());
+                    result = JsonUtil.handleCityResponse(responseText, selectedProvince.getId());
                 } else if ("county".equals(type)) {
-                    result = Utility.handleCountyResponse(responseText, selectedCity.getId());
+                    result = JsonUtil.handleCountyResponse(responseText, selectedCity.getId());
                 }
                 if (result) {
                     getActivity().runOnUiThread(new Runnable() {
@@ -280,7 +241,7 @@ public class ChooseAreaFragment extends Fragment {
                         @Override
                         public void run() {
 
-                            Utility.closeProgressDialog();
+                            PromptUtil.closeProgressDialog();
                             if ("province".equals(type)) {
                                 queryProvinces();
                             } else if ("city".equals(type)) {
@@ -289,8 +250,6 @@ public class ChooseAreaFragment extends Fragment {
 
                                 queryCounties();
                             }
-
-                            //ToastUtil.ShowShortToast(Thread.currentThread().getName());
                         }
                     });
                 }
@@ -302,14 +261,12 @@ public class ChooseAreaFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Utility.closeProgressDialog();
-                        Toast.makeText(getContext(), "加载失败", Toast.LENGTH_SHORT).show();
+                        PromptUtil.closeProgressDialog();
+                        PromptUtil.showShortToast("加载失败");
                     }
                 });
             }
         });
     }
-
-
 
 }

@@ -9,47 +9,40 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PersistableBundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
-
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
 import android.view.View;
-
 import android.widget.Button;
-
 import android.widget.Toast;
-
-import com.example.xinxie.remote_conroller.util.Utility;
+import com.example.xinxie.remote_conroller.util.PromptUtil;
 import com.example.xinxie.remote_conroller.view.TempControlView;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-
 public class MainActivity extends AppCompatActivity {
 
-    //private GestureDetector gestureDetector;
+    private String TAG="MainActivity";
 
-
-    private static final String TAG="MainActivity";
     private final static int REQUEST_CONNECT_DEVICE = 1;    //宏定义查询设备标志
 
     private final static int REQUEST_GPS_ON=2; //宏定义请求开启GPS标志
@@ -66,11 +59,11 @@ public class MainActivity extends AppCompatActivity {
     private boolean bRun = true;
     private boolean bThread = false;  //接收数据线程运行状态标志位
 
-    //private ActionBar actionBar;
     private SharedPreferences sp;
     private SharedPreferences.Editor editor;
     private String ifSwitch ;
 
+    //自带下拉刷新功能的控件
     public SwipeRefreshLayout swipeRefresh;
 
     //主菜单按钮
@@ -79,53 +72,56 @@ public class MainActivity extends AppCompatActivity {
     //侧滑菜单控件
     public DrawerLayout drawerLayout;
 
-   //private Button bu_stop;
-
-    //当前城市
-    //private TextView currentCity;
-
     //定位按钮
     private Button locate;
-
 
     //获取本地蓝牙适配器，即蓝牙设备
     private BluetoothAdapter _bluetooth = BluetoothAdapter.getDefaultAdapter();
 
-    //private String cityName;
-
     //自定义温度显示控件
     private TempControlView tempControl;
 
+    //自定义Fragment
     private WeatherFragment weatherFragment;
 
-    private String weatherId;
+    //当前天气信息的代号
+    private String mWeatherId;
+
+    //标题栏控件
+    private Toolbar toolbar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        //界面初始化
+
         super.onCreate(savedInstanceState);
-        //设置画面为主画面 main.xml
-        setContentView(R.layout.main);
-        Toolbar toolbar=(Toolbar) findViewById(R.id.toolbar);
+
+        //界面初始化
+
+        //设置画面为主画面 activity_main.xml
+        setContentView(R.layout.activity_main);
+        toolbar=(Toolbar) findViewById(R.id.main_toolbar);
         //将Toolbar标题栏中的标题内容设置为空
         toolbar.setTitle("");
         //使用ToolBar控件替代ActionBar控件
         setSupportActionBar(toolbar);
 
+        //在你要接受EventBus的界面注册
+        EventBus.getDefault().register(this);
+
         weatherFragment=(WeatherFragment)getSupportFragmentManager().findFragmentById(R.id.weather_fragment);
 
         swipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
-        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
 
-        //currentCity = (TextView)findViewById(R.id.title_city);
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
 
         navButton = (Button) findViewById(R.id.nav_button);
 
-        locate = (Button)findViewById(R.id.locate);
+        locate = (Button)findViewById(R.id.locate_button);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
         tempControl = (TempControlView) findViewById(R.id.temp_control);
+
         // 设置三格代表温度1度
         tempControl.setAngleRate(3);
 
@@ -169,19 +165,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
 
-                //调用WeatherFragment中的requestWeather(weatherId)方法
                 //重新请求天气信息，达到刷新的效果
-                weatherFragment.requestWeather(weatherId);
+                weatherFragment.requestWeather(mWeatherId);
             }
         });
-        /*
-        当使用AppCompatActivity或其他support包中的基类，那么获得ActionBar实例需要用另一个相应的方法，
-        那就是getSupportActionBar(),ActionBar也要使用相应support包下的。
-         */
-
-        //actionBar = getSupportActionBar();
-        //bu_stop=(Button)findViewById(R.id.stop);
-        //currentCity=(TextView)findViewById(R.id.cityName);
 
         sp = getSharedPreferences("config", 0);
         editor = sp.edit();
@@ -204,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-                Utility.ShowShortToast("请声明相关的权限！");
+                PromptUtil.showShortToast("请声明相关的权限！");
                 return;
             }
         }
@@ -216,9 +203,6 @@ public class MainActivity extends AppCompatActivity {
 //            //调用ShowGPSDialog()方法弹出询问GPS是否开启的对话框
 //            ShowGPSDialog();
 //        }
-
-        //开启定位，获取当前的位置信息
-        //startLocate();
 
         //如果打开本地蓝牙设备不成功，提示信息，结束程序
         if (_bluetooth == null){
@@ -238,10 +222,24 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
 
+        Log.e(TAG,"onCreate()...");
 
-        Log.e("描述：", TAG+"........onCreate........");
     }
 
+
+    /**
+     * 该方法是使用EventBus在Fragment和Activity之间传递参数
+     *
+     * 该方法需使用@Subscribe注解,参数类型可自定义
+     * 但要根据传递的参数类型设定
+     * 通过这个方法接收从Fragment中传过来的天气信息代号mWeatherId
+     * @param mWeatherId
+     */
+    @Subscribe
+    public void getEventBus(String mWeatherId) {
+
+        this.mWeatherId=mWeatherId;
+    }
 
     /**
      * 暂停按钮点击事件
@@ -294,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main, menu);
+        inflater.inflate(R.menu.option, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -313,10 +311,6 @@ public class MainActivity extends AppCompatActivity {
                 editor.commit();
                 finish();//结束当前Activity
                 break;
-//            case R.id.pin_stay:
-//                item.setIcon(R.drawable.pin_goaway);
-//                //actionBar.hide();
-//                break;
             case R.id.home:   //用户按下Home键
                 editor.putBoolean("isConnected", false);
                 editor.apply();
@@ -325,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.about:
                 Intent intent = new Intent(MainActivity.this,AboutActivity.class);
                 startActivity(intent);//跳转至AboutActivity
+                finish();//结束当前Activity
                 break;
             default:
                 break;
@@ -441,12 +436,11 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case REQUEST_GPS_ON:
-                Utility.ShowShortToast("设置GPS完成！");
+                PromptUtil.showShortToast("设置GPS完成！");
                 break;
             default:break;
         }
     }
-
 
     //接收数据线程
     Thread ReadThread=new Thread(){
@@ -509,6 +503,8 @@ public class MainActivity extends AppCompatActivity {
     //关闭程序掉用处理部分
     public void onDestroy(){
         super.onDestroy();
+        //在界面销毁的地方要解绑
+        EventBus.getDefault().unregister(this);
         if(_socket!=null)  //关闭连接socket
             try{
                 _socket.close();
@@ -590,14 +586,5 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
 
     }
-
-
-
-
-
-
-
-
-
 
 }

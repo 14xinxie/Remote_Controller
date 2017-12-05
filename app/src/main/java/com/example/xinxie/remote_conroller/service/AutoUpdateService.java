@@ -12,7 +12,7 @@ import android.preference.PreferenceManager;
 
 import com.example.xinxie.remote_conroller.gson.Weather;
 import com.example.xinxie.remote_conroller.util.HttpUtil;
-import com.example.xinxie.remote_conroller.util.Utility;
+import com.example.xinxie.remote_conroller.util.JsonUtil;
 
 import java.io.IOException;
 
@@ -53,14 +53,14 @@ public class AutoUpdateService extends Service {
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
             // 有缓存时直接解析天气数据
-            Weather weather = Utility.handleWeatherResponse(weatherString);
+            Weather weather = JsonUtil.handleWeatherResponse(weatherString);
             String weatherId = weather.basic.weatherId;
             String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
             HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     String responseText = response.body().string();
-                    Weather weather = Utility.handleWeatherResponse(responseText);
+                    Weather weather = JsonUtil.handleWeatherResponse(responseText);
                     if (weather != null && "ok".equals(weather.status)) {
                         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(AutoUpdateService.this).edit();
                         editor.putString("weather", responseText);

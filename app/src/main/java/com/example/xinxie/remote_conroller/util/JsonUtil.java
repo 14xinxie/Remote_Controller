@@ -17,9 +17,9 @@ import org.json.JSONObject;
 
 
 /**
- * 工具类
+ * Json数据解析的工具类
  */
-public class Utility {
+public class JsonUtil {
 
 
     private static ProgressDialog progressDialog;
@@ -103,10 +103,9 @@ public class Utility {
         try {
             JSONArray jsonArray=null;
             JSONObject jsonObject = new JSONObject(response);
+
             //根据传入的type字段判断，进行相应的字段解析
-
             jsonArray = jsonObject.getJSONArray("HeWeather");
-
             String weatherContent = jsonArray.getJSONObject(0).toString();
             return new Gson().fromJson(weatherContent, Weather.class);
         } catch (Exception e) {
@@ -115,47 +114,6 @@ public class Utility {
         return null;
     }
 
-    /**
-     * Toast短时间显示
-     * @param s
-     */
-    public static void ShowShortToast(String s){
-
-        Toast.makeText(MyApplication.getContext(),s,Toast.LENGTH_SHORT).show();
-
-    }
-
-    /**
-     * Toast长时间显示
-     * @param s
-     */
-    public static void ShowLongToast(String s){
-
-        Toast.makeText(MyApplication.getContext(),s,Toast.LENGTH_LONG).show();
-
-    }
-
-
-    /**
-     * 显示进度对话框
-     */
-    public static void showProgressDialog() {
-        if (progressDialog == null) {
-            progressDialog = new ProgressDialog(MyApplication.getContext());
-            progressDialog.setMessage("正在加载...");
-            progressDialog.setCanceledOnTouchOutside(false);
-        }
-        progressDialog.show();
-    }
-
-    /**
-     * 关闭进度对话框
-     */
-    public static void closeProgressDialog() {
-        if (progressDialog != null) {
-            progressDialog.dismiss();
-        }
-    }
 
 
 }
