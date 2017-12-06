@@ -1,7 +1,12 @@
 package com.example.xinxie.remote_conroller.util;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.example.xinxie.remote_conroller.MainActivity;
@@ -56,6 +61,38 @@ public class PromptUtil {
         }
     }
 
+
+    public static void showDialog(final View view, String title, Context context){
+
+        final AlertDialog.Builder builder=new AlertDialog.Builder(context);
+        builder.setTitle(title);
+        builder.setCancelable(false);
+        builder.setPositiveButton("确定",new DialogInterface.OnClickListener(){
+
+            @Override
+            public void onClick(DialogInterface dialogInterface,int which){
+
+
+
+                //关闭对话框之前，需移除view的父容器
+                //否则会报异常
+                if (view != null) {
+                    ViewGroup parent = (ViewGroup) view.getParent();
+                    if (parent != null) {
+                        parent.removeView(view);
+                    }
+                }
+                    builder.show().dismiss();
+
+            }
+
+
+        });
+
+        //设置对话框中的布局为自定义布局
+        builder.setView(view);
+        builder.show();
+    }
 
 }
 

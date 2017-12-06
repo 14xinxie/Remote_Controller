@@ -18,7 +18,7 @@
         android:id="@+id/weather_pic_img"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_launcher"
+        android:src="@drawable/failure_load"
         android:layout_alignParentRight="true"
         android:layout_marginRight="150dp"/>
     <TextView
@@ -26,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:text="17"
+        android:text="17℃"
         android:layout_marginRight="20dp"
         android:textColor="#000000"
         android:textSize="30sp" />

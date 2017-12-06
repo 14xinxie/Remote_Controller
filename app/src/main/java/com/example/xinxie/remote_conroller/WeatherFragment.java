@@ -1,5 +1,6 @@
 package com.example.xinxie.remote_conroller;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -68,22 +69,9 @@ public class WeatherFragment extends Fragment {
     //实时天气状况图片
     private ImageView weatherPicImg;
 
-    private  MainActivity mActivity;
 
 
-    /**
-     * 当Fragment与Activity发生关联时调用
-     * 获取MainActivity实例
-     * @param context
-     */
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        this.mActivity=(MainActivity)context;
-
-    }
 
     /**
      * 每次创建、绘制该Fragment的View组件时回调该方法
@@ -126,6 +114,7 @@ public class WeatherFragment extends Fragment {
         //执行耗时的定位方法
         startLocate();
 
+        locaWeatherFlag=false;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
@@ -137,7 +126,7 @@ public class WeatherFragment extends Fragment {
 
             //没有缓存时获取当前位置的天气信息
             //即设置定位标志位为false,开启定位
-            locaWeatherFlag=false;
+
 
         }
         Log.e(TAG,"onActivityCreated...");
@@ -149,6 +138,8 @@ public class WeatherFragment extends Fragment {
      * 根据天气id请求城市天气信息。
      */
     public void requestWeather(final String weatherId) {
+
+        final MainActivity mActivity=(MainActivity) getActivity();
 
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
 
@@ -164,7 +155,7 @@ public class WeatherFragment extends Fragment {
                 final String responseText = response.body().string();
                 final Weather weather = JsonUtil.handleWeatherResponse(responseText);
 
-                mActivity.runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
@@ -182,6 +173,7 @@ public class WeatherFragment extends Fragment {
                             //网络图片的请求Url
                             String requestWeatherPic = "https://cdn.heweather.com/cond_icon/"+mWeatherPictureId+".png";
                             //使用Glide开源框架加载图片
+
                             Glide.with(getActivity()).load(requestWeatherPic).into(weatherPicImg);
 
 
@@ -201,7 +193,7 @@ public class WeatherFragment extends Fragment {
 
 
                 e.printStackTrace();
-                mActivity.runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
 
@@ -222,6 +214,8 @@ public class WeatherFragment extends Fragment {
      */
     public void requestWeather(final double latitude,final double longitude) {
 
+
+        final MainActivity mActivity=(MainActivity) getActivity();
         String weatherUrl = "http://guolin.tech/api/weather?cityid="+latitude+","+longitude+"&key=bc0418b57b2d4918819d3974ac1285d9";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
@@ -230,7 +224,7 @@ public class WeatherFragment extends Fragment {
                 final Weather weather = JsonUtil.handleWeatherResponse(responseText);
 
 
-                mActivity.runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
@@ -247,6 +241,10 @@ public class WeatherFragment extends Fragment {
 
                             //网络图片的请求Url
                             String requestWeatherPic = "https://cdn.heweather.com/cond_icon/"+mWeatherPictureId+".png";
+
+
+                            //PromptUtil.showShortToast("mWeatherPictureId:"+mWeatherPictureId);
+
                             //使用Glide开源框架加载图片
                             Glide.with(getActivity()).load(requestWeatherPic).into(weatherPicImg);
 
@@ -264,7 +262,7 @@ public class WeatherFragment extends Fragment {
             public void onFailure(Call call, IOException e) {
                 e.printStackTrace();
 
-                mActivity.runOnUiThread(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
 

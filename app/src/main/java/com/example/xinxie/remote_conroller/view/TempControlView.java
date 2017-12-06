@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.example.xinxie.remote_conroller.R;
+import com.example.xinxie.remote_conroller.util.PromptUtil;
 
 /**
  * Created by 14292 on 2017-11-24.
@@ -46,14 +47,13 @@ public class TempControlView extends View {
     private Paint tempPaint;
     // 文本提示
     private String title = "当前室内温度";
-    // 温度
-    private int temperature = 15;
+    private int temperature;
     // 最低温度
     private int minTemp = 15;
     // 最高温度
     private int maxTemp = 30;
     // 四格代表温度1度
-    private int angleRate = 4;
+    private int angleRate=4;
     // 每格的角度
     private float angleOne = (float) 270 / (maxTemp - minTemp) / angleRate;
 
@@ -320,6 +320,8 @@ public class TempControlView extends View {
         //设置抗锯齿
         canvas.setDrawFilter(paintFlagsDrawFilter);
         canvas.drawBitmap(buttonImage, matrix, buttonPaint);
+
+        //PromptUtil.showShortToast("旋转按钮画好了");
     }
 
     /**

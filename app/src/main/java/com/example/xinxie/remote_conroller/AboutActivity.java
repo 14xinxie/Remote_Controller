@@ -18,7 +18,7 @@ public class AboutActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_about);
+        setContentView(R.layout.dialog_about);
 
         backButton = (Button)findViewById(R.id.back_button);
 
@@ -50,6 +50,7 @@ public class AboutActivity extends AppCompatActivity {
 //                Intent intent = new Intent(AboutActivity.this,MainActivity.class);
 //                startActivity(intent);
 //                finish();
+
                 break;
             default:
                 break;

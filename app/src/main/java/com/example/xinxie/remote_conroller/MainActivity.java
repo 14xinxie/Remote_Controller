@@ -5,10 +5,12 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +18,7 @@ import android.os.Message;
 import android.os.PersistableBundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -29,7 +32,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.xinxie.remote_conroller.util.MyApplication;
 import com.example.xinxie.remote_conroller.util.PromptUtil;
 import com.example.xinxie.remote_conroller.view.TempControlView;
 import org.greenrobot.eventbus.EventBus;
@@ -37,6 +44,8 @@ import org.greenrobot.eventbus.Subscribe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -78,8 +87,6 @@ public class MainActivity extends AppCompatActivity {
     //获取本地蓝牙适配器，即蓝牙设备
     private BluetoothAdapter _bluetooth = BluetoothAdapter.getDefaultAdapter();
 
-    //自定义温度显示控件
-    private TempControlView tempControl;
 
     //自定义Fragment
     private WeatherFragment weatherFragment;
@@ -90,6 +97,17 @@ public class MainActivity extends AppCompatActivity {
     //标题栏控件
     private Toolbar toolbar;
 
+
+    //关于对话框中的标题
+    private String aboutTitle;
+
+    //对话框中的view
+    private View dialogView;
+
+    //联系电话
+    private TextView phoneTv;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -99,6 +117,134 @@ public class MainActivity extends AppCompatActivity {
 
         //设置画面为主画面 activity_main.xml
         setContentView(R.layout.activity_main);
+
+        initView();
+
+        //判断当前手机Android操作系统对应的SDK版本是否大于23
+        if(Build.VERSION.SDK_INT >= 23){
+
+            //如果当前手机Android操作系统对应的SDK版本大于23
+            //则进行下面的权限判断
+            List<String> permissionList = new ArrayList<>();
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(Manifest.permission.READ_PHONE_STATE);
+            }
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(Manifest.permission.CALL_PHONE);
+            }
+
+
+            //如果permissionList不为空，则将这些未声明的权限一次性申请
+            if (!permissionList.isEmpty()) {
+                String[] permissions = permissionList.toArray(new String[permissionList.size()]);
+                ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);
+            } else {
+
+                //如果permissionList为空，则上述运行时权限都已经在AndroidManifest.xml文件中声明
+                //则程序继续运行
+
+                initData();
+            }
+        }
+
+        initData();
+
+
+        Log.e(TAG,"onCreate()...");
+
+    }
+
+
+    /**
+     * 对权限申请结果的逻辑处理
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+    public void onRequestPermissionsResult(int requestCode, String permissions[],
+                int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+
+                //grantResults记录你申请的权限的结果
+                if (grantResults.length > 0) {
+
+                    //通过一个for循环将每个权限的申请的结果进行判断
+                    //如果任何一个权限被拒绝，那么就直接结束程序
+                    for(int result:grantResults){
+
+                        if(result!= PackageManager.PERMISSION_GRANTED){
+                            PromptUtil.showShortToast("必须同意所有权限才能使用本程序");
+                            finish();
+                            return;
+                        }
+                    }
+
+                    initData();
+
+                } else {
+
+                    PromptUtil.showShortToast("发生未知错误");
+                    finish();
+                }
+
+                break;
+
+            }
+            default:
+        }
+    }
+
+    /**
+     * 初始化数据
+     */
+    public void initData(){
+
+        sp = getSharedPreferences("config", 0);
+        editor = sp.edit();
+        ifSwitch=sp.getString("switch",null);
+        if(TextUtils.isEmpty(ifSwitch)) {
+            editor.putString("switch", "on");
+            editor.apply();
+        }
+
+        //如果打开本地蓝牙设备不成功，提示信息，结束程序
+        if (_bluetooth == null){
+            Toast.makeText(this, "无法打开手机蓝牙，请确认手机是否有蓝牙功能！",Toast.LENGTH_LONG).show();
+            finish();//结束当前Activity
+            return;
+        }
+
+        // 设置设备可以被搜索
+        new Thread(){
+            public void run()
+            {
+                //判断蓝牙是否已经打开
+                if(_bluetooth.isEnabled()==false){
+                    _bluetooth.enable();//打开蓝牙
+                }
+            }
+        }.start();
+
+    }
+
+    /**
+     * 初始化视图
+     */
+    public void initView(){
+
+        dialogView=getLayoutInflater().inflate(R.layout.dialog_about,null);
+
         toolbar=(Toolbar) findViewById(R.id.main_toolbar);
         //将Toolbar标题栏中的标题内容设置为空
         toolbar.setTitle("");
@@ -119,28 +265,6 @@ public class MainActivity extends AppCompatActivity {
         locate = (Button)findViewById(R.id.locate_button);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-
-        tempControl = (TempControlView) findViewById(R.id.temp_control);
-
-        // 设置三格代表温度1度
-        tempControl.setAngleRate(3);
-
-        //设置温度表中的最大温度,最小温度和当前温度
-        tempControl.setTemp(15, 40, 15);
-
-        tempControl.setOnTempChangeListener(new TempControlView.OnTempChangeListener() {
-            @Override
-            public void change(int temp) {
-                //Toast.makeText(MainActivity.this, temp + "°", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        tempControl.setOnClickListener(new TempControlView.OnClickListener() {
-            @Override
-            public void onClick(int temp) {
-                Toast.makeText(MainActivity.this, temp + "°", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         navButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -170,59 +294,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        sp = getSharedPreferences("config", 0);
-        editor = sp.edit();
-        ifSwitch=sp.getString("switch",null);
-        if(TextUtils.isEmpty(ifSwitch)) {
-            editor.putString("switch", "on");
-            editor.apply();
-        }
-
-        /*
-        当Sdk版本大于23时,手动检查权限是否已经声明
-        如果Sdk版本大于23,而并没有在AndroidManifest.xml文件中声明相关的权限，
-        则弹出Toast提示用户
-        */
-
-        //判断当前手机Android操作系统对应的SDK版本是否大于23
-        if(Build.VERSION.SDK_INT >= 23){
-            //如果当前手机Android操作系统对应的SDK版本大于23
-            //则进行下面的权限判断
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                PromptUtil.showShortToast("请声明相关的权限！");
-                return;
-            }
-        }
-
-        //如果用户手机中GPS定位和网络定位都没开启
-        //则弹出询问对话框，询问用户是否开启定位服务
-//        if(!(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-//                &&!(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))){
-//            //调用ShowGPSDialog()方法弹出询问GPS是否开启的对话框
-//            ShowGPSDialog();
-//        }
-
-        //如果打开本地蓝牙设备不成功，提示信息，结束程序
-        if (_bluetooth == null){
-            Toast.makeText(this, "无法打开手机蓝牙，请确认手机是否有蓝牙功能！",Toast.LENGTH_LONG).show();
-            finish();//结束当前Activity
-            return;
-        }
-
-        // 设置设备可以被搜索
-        new Thread(){
-            public void run()
-            {
-                //判断蓝牙是否已经打开
-                if(_bluetooth.isEnabled()==false){
-                    _bluetooth.enable();//打开蓝牙
-                }
-            }
-        }.start();
-
-        Log.e(TAG,"onCreate()...");
 
     }
 
@@ -317,15 +388,45 @@ public class MainActivity extends AppCompatActivity {
                 finish();//结束当前Activity
                 break;
             case R.id.about:
-                Intent intent = new Intent(MainActivity.this,AboutActivity.class);
-                startActivity(intent);//跳转至AboutActivity
-                finish();//结束当前Activity
+
+                aboutTitle="关于温控风扇";
+
+
+
+                //弹出介绍该软件的对话框
+                PromptUtil.showDialog(dialogView,aboutTitle,MainActivity.this);
+
+
+                phoneTv = (TextView) dialogView.findViewById(R.id.phone_text);
+
+
+
+                phoneTv.setOnClickListener(new View.OnClickListener(){
+
+                    @Override
+                    public void onClick(View v) {
+
+                        //获取联系电话
+                        String phone=phoneTv.getText().toString();
+
+                        //实现拨打电话
+                        Intent intent=new Intent(Intent.ACTION_DIAL);
+
+                        intent.setData(Uri.parse("tel:"+phone));
+
+                        startActivity(intent);
+                    }
+                });
+
+
                 break;
             default:
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
+
+
 
     /**
      * 利用蓝牙发送数据
@@ -551,40 +652,5 @@ public class MainActivity extends AppCompatActivity {
         return;
     }
 
-
-    /**
-     * 弹出询问GPS是否开启的对话框
-     */
-    private void ShowGPSDialog(){
-
-        //弹出对话框
-        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-        dialog.setTitle("提醒：");
-        dialog.setMessage("为了更好的为您服务,请您打开您的GPS!");
-
-        //dialog弹出后会点击屏幕或物理返回键，dialog不消失
-        dialog.setCancelable(false);
-        //界面上左边按钮，及其监听
-        dialog.setNeutralButton("确定",
-                new android.content.DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-
-                        // 转到手机设置界面，用户设置GPS
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivityForResult(intent, REQUEST_GPS_ON); // 设置完成后返回到原来的界面
-
-                    }
-                });
-        //界面上右边按钮，及其监听
-        dialog.setPositiveButton("取消", new android.content.DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface arg0, int arg1) {
-                arg0.dismiss();//关闭对话框
-            }
-        } );
-        dialog.show();
-
-    }
 
 }
