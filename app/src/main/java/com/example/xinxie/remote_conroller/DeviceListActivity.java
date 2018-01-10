@@ -21,9 +21,9 @@ import android.widget.TextView;
 
 public class DeviceListActivity extends Activity {
 
-    // 调试用
-    private static final String TAG = "DeviceListActivity";
-    private static final boolean D = true;
+
+    //private static final String TAG = "DeviceListActivity";
+
 
     // 返回时数据标签
     public static String EXTRA_DEVICE_ADDRESS = "设备地址";
@@ -82,19 +82,6 @@ public class DeviceListActivity extends Activity {
         // 得到本地蓝牙句柄
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        // 得到已配对蓝牙设备列表
-        //Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
-
-        // 添加已配对设备到列表并显示
-        // if (pairedDevices.size() > 0) {
-        // findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
-        //    for (BluetoothDevice device : pairedDevices) {
-        //         mPairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-        //     }
-        // } else {
-        //     String noDevices = "No devices have been paired";
-        //     mPairedDevicesArrayAdapter.add(noDevices);
-        // }
     }
 
     @Override
@@ -117,7 +104,6 @@ public class DeviceListActivity extends Activity {
      * 开始服务和设备查找
      */
     private void doDiscovery() {
-        if (D) Log.d(TAG, "doDiscovery()");
 
         // 在窗口显示查找中信息
         setProgressBarIndeterminateVisibility(true);
@@ -178,8 +164,7 @@ public class DeviceListActivity extends Activity {
                     String noDevices = "没有找到新设备";
                     mNewDevicesArrayAdapter.add(noDevices);
                 }
-                //   if(mPairedDevicesArrayAdapter.getCount() > 0)
-                //  	findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
+
             }
         }
     };

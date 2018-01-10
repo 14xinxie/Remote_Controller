@@ -18,6 +18,7 @@
             android:layout_height="wrap_content"
             android:fitsSystemWindows="true">
 
+            <include layout="@layout/about_toolbar"/>
             <TextView
                 android:layout_marginTop="20dp"
                 android:layout_marginLeft="10dp"
@@ -26,14 +27,15 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/instruction"
                 android:textSize="20sp"
-
                 android:lineSpacingExtra="4dp"
                 android:text="使用说明：\n        使用该软件前请把温控风扇的蓝牙权限打开，打开后点击软件右下角的连接按钮，搜索蓝牙，配对密码为1234。直到连接成功，才可与温控风扇进行交互。
     \n        如果连接失败，请尝试重启温控风扇的蓝牙，或者去系统中清除蓝牙记录，重新连接。"
                 />
 
             <RelativeLayout
-                android:layout_width="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="60dp">
 
@@ -43,7 +45,7 @@
                     android:layout_height="wrap_content"
                     android:text="联系电话:"
                     android:textSize="20sp"
-                    android:layout_marginLeft="80dp"/>
+                    android:layout_marginLeft="120dp"/>
 
                 <TextView
                     android:id="@+id/phone_text"
@@ -53,12 +55,12 @@
                     android:text="18720931185"
                     android:textColor="#99e74c3c"
                     android:textSize="20sp"
-                    android:layout_marginLeft="10dp"/>
+                    android:layout_marginRight="10dp"/>
 
 
                 <TextView
                     android:layout_marginTop="30dp"
-                    android:layout_marginLeft="120dp"
+                    android:layout_marginLeft="150dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="20sp"

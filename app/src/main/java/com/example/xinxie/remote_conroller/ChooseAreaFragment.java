@@ -222,6 +222,14 @@ public class ChooseAreaFragment extends Fragment {
      * 根据传入的地址和类型从服务器上查询省市县数据。
      */
     public void queryFromServer(String address, final String type) {
+
+        //getActivity()有可能为空，需要提前判断
+        if(getActivity()==null){
+
+            PromptUtil.showShortToast("服务器繁忙，请稍后重试！");
+            return;
+        }
+
         PromptUtil.showProgressDialog("正在加载...",getActivity());
         HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override

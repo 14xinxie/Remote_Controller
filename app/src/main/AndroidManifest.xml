@@ -27,10 +27,14 @@
 
     <!--任何一个项目只能配置一个Application-->
 
+    <!--
+    android:icon="@drawable/light"
+    配置应用图标的图片
+    -->
     <application
         android:name="com.example.xinxie.remote_conroller.util.MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/light"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">

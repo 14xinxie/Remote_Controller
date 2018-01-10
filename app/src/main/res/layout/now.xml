@@ -5,7 +5,8 @@
     android:layout_height="50dp"
     android:layout_margin="10dp">
 
-    <TextView
+
+     <TextView
         android:id="@+id/weather_info_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -14,13 +15,17 @@
         android:textColor="#000000"
         android:text="多云"
         android:textSize="30sp" />
+
+
     <ImageView
         android:id="@+id/weather_pic_img"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/failure_load"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="150dp"/>
+        android:layout_centerHorizontal="true"
+        />
+
+
     <TextView
         android:id="@+id/degree_text"
         android:layout_width="wrap_content"
@@ -30,5 +35,7 @@
         android:layout_marginRight="20dp"
         android:textColor="#000000"
         android:textSize="30sp" />
+
+
 
 </RelativeLayout>
