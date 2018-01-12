@@ -472,6 +472,8 @@ public class ControllFragment extends Fragment {
 
                 is.close();
                 socket.close();
+                is=null;
+                socket=null;
 
             }catch(IOException e){
                 e.printStackTrace();
