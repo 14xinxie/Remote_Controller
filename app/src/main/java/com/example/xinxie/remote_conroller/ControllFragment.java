@@ -49,6 +49,12 @@ public class ControllFragment extends Fragment {
     //连接按钮
     private Button btn_connect;
 
+    //加速按钮
+    private Button btn_speed;
+
+    //减速按钮
+    private Button btn_slow;
+
     //开关按钮
     private Button btn_switch;
     private InputStream is;    //输入流，用来接收蓝牙数据
@@ -69,6 +75,10 @@ public class ControllFragment extends Fragment {
 
         view = inflater.inflate(R.layout.controll_fragment,container,false);
         btn_connect=(Button)view.findViewById(R.id.connect_button);
+
+        btn_speed =(Button)view.findViewById(R.id.speed_button);
+
+        btn_slow =(Button)view.findViewById(R.id.slow_button);
 
         btn_switch=(Button)view.findViewById(R.id.switch_button);
 
@@ -120,7 +130,7 @@ public class ControllFragment extends Fragment {
             @Override
             public void change(int temp) {
 
-                PromptUtil.showShortToast("温度改变中...");
+                //PromptUtil.showShortToast("温度改变中...");
             }
         });
 
@@ -128,7 +138,7 @@ public class ControllFragment extends Fragment {
             @Override
             public void onClick(int temp) {
 
-                PromptUtil.showShortToast(temp + "°");
+                //PromptUtil.showShortToast(temp + "°");
             }
         });
 
@@ -137,7 +147,6 @@ public class ControllFragment extends Fragment {
          * 连接按钮的按键响应函数
          * @param v
          */
-
         btn_connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -148,7 +157,7 @@ public class ControllFragment extends Fragment {
                     return;
                 }
 
-                if (socket == null) {
+                if (socket==null) {
                     Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class); //跳转程序设置
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);  //设置返回宏定义
                 } else {
@@ -159,6 +168,7 @@ public class ControllFragment extends Fragment {
                         //关闭资源
                         is.close();//关闭输入流
                         socket.close();//关闭socket
+                        socket=null;    //socket赋值为null,否则不能进行第二次蓝牙连接
                         readRun = false;//停止接收数据线程
                         btn_connect.setBackgroundResource(R.drawable.connect_on);
                         btn_connect.setText("连接");
@@ -192,12 +202,12 @@ public class ControllFragment extends Fragment {
                         editor.putString("switch", "off");
                         editor.apply();
                         btn_switch.setBackgroundResource(R.drawable.switch_off);
-                        sendCommand("1");//发送"1"代表开启温控风扇
+                        sendCommand("1");//发送"1"代表开启温控模式
                     }else{
                         editor.putString("switch", "on");
                         editor.apply();
                         btn_switch.setBackgroundResource(R.drawable.switch_on);
-                        sendCommand("0");//发送"0"代表关闭温控风扇
+                        sendCommand("0");//发送"0"代表开启手动模式
                     }
                 }else{
 
@@ -207,6 +217,49 @@ public class ControllFragment extends Fragment {
             }
         });
 
+        /**
+         * 减速按钮点击事件
+         */
+        btn_slow.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                if(sp.getBoolean("isConnected", false)==true){
+                    if(sp.getString("switch", null).equals("on")){
+
+                        PromptUtil.showShortToast("请开启手动模式");
+
+                    }else{
+
+                        sendCommand("d");//发送"d"代表减速
+                    }
+                }else{
+
+                    PromptUtil.showShortToast("请与服务端连接");
+                }
+
+            }
+        });
+
+        btn_speed.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                if(sp.getBoolean("isConnected", false)==true){
+                    if(sp.getString("switch", null).equals("on")){
+
+                        PromptUtil.showShortToast("请开启手动模式");
+
+                    }else{
+
+                        sendCommand("u");//发送"u"代表加速
+                    }
+                }else{
+
+                    PromptUtil.showShortToast("请与服务端连接");
+                }
+            }
+        });
 
         /**
          * 处理接收单片机蓝牙模块发送过来的数据
@@ -215,13 +268,18 @@ public class ControllFragment extends Fragment {
             public void handleMessage(Message msg){
                 super.handleMessage(msg);
 
-                PromptUtil.showShortToast("接收到的数据为"+msg.obj.toString());
+                //获取单片机端发送过来的温度值
+                //将字符串转为浮点型，然后再强制转换为整型
+                int temp=(int)Float.parseFloat(msg.obj.toString());
+
+                //改变自定义温度控件上显示的温度
+                tempControl.setTemp(15, 40, temp);
+
+
             }
         };
 
     }
-
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -279,7 +337,9 @@ public class ControllFragment extends Fragment {
                     //如果接收数据线程未开启，则开启接收数据线程，
                     //并将接收数据线程标志位置为true
                     if(readRun==false){
+                        readRun=true;   //置接收数据线程标志位为true
                         new ReadThread().start(); //创建线程实例，启动接收数据线程
+
                     }
 
                 }
@@ -325,14 +385,12 @@ public class ControllFragment extends Fragment {
 
                     //如果短时间没有数据，
                     //则利用Handler发送消息通知UI线程显示接收的数据
-                    //同时跳出while循环
-                    if(is.available()==0){
+                    if(s.length()==3){
 
                         //需要数据传递，用下面方法；
                         Message msg = new Message();
                         msg.obj = s;//可以是基本类型，可以是对象，可以是List、map等；
                         receiveHandler.sendMessage(msg);
-                        break;
                     }
 
                 }catch(IOException e){
@@ -347,7 +405,7 @@ public class ControllFragment extends Fragment {
      * 通过OutputStream 输出数据
      * @param command
      */
-    public void sendCommand(String command){
+    private void sendCommand(String command){
         int i;
         int n = 0;
         if(socket!=null) {
@@ -389,6 +447,9 @@ public class ControllFragment extends Fragment {
     }
 
 
+    /**
+     * Fragment销毁时调用
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -416,10 +477,7 @@ public class ControllFragment extends Fragment {
                 e.printStackTrace();
             }
         }
-
         bluetooth.disable();  //关闭蓝牙服务
-
-
 
     }
 }

@@ -135,8 +135,9 @@ public class WeatherFragment extends Fragment {
 
     /**
      * 根据天气id请求城市天气信息。
+     * 由于MainActivity中还需调用此方法，所以不能将该方法的访问域定义为private
      */
-    public void requestWeather(final String weatherId) {
+    protected void requestWeather(final String weatherId) {
 
         final MainActivity mActivity=(MainActivity) getActivity();
 
@@ -168,7 +169,6 @@ public class WeatherFragment extends Fragment {
                             editor.putString("weather", responseText);
                             editor.apply();
                             mWeatherId = weather.basic.weatherId;
-                            //mWeatherPictureId=weather.now.more.pictureId;
 
                             //发送mWeatherId给MainActivity
                             EventBus.getDefault().post(mWeatherId);
@@ -208,7 +208,7 @@ public class WeatherFragment extends Fragment {
      * @param latitude
      * @param longitude
      */
-    public void requestWeather(final double latitude,final double longitude) {
+    private void requestWeather(final double latitude,final double longitude) {
 
 
         final MainActivity mActivity=(MainActivity) getActivity();
@@ -238,8 +238,6 @@ public class WeatherFragment extends Fragment {
 
                             //发送mWeatherId给MainActivity
                             EventBus.getDefault().post(mWeatherId);
-
-
 
                             showWeatherInfo(weather);
                         } else {
@@ -300,11 +298,10 @@ public class WeatherFragment extends Fragment {
         getActivity().startService(intent);
     }
 
-
     /**
      * 开启定位
      */
-    public void startLocate() {
+    private void startLocate() {
         mLocationClient = new LocationClient(MyApplication.getContext());     //声明LocationClient类
         myLocationListener = new MyLocationListener();
         mLocationClient.registerLocationListener(myLocationListener);
@@ -313,11 +310,10 @@ public class WeatherFragment extends Fragment {
         mLocationClient.start();//开启定位
     }
 
-
     /**
      * 初始化Location
      */
-    public void initLocation() {
+    private void initLocation() {
 
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);
@@ -384,7 +380,9 @@ public class WeatherFragment extends Fragment {
         }
     }
 
-
+    /**
+     * Fragment被销毁时调用
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();

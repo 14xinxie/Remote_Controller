@@ -24,7 +24,6 @@ public class DeviceListActivity extends Activity {
 
     //private static final String TAG = "DeviceListActivity";
 
-
     // 返回时数据标签
     public static String EXTRA_DEVICE_ADDRESS = "设备地址";
 
@@ -57,9 +56,9 @@ public class DeviceListActivity extends Activity {
         // 初使化设备存储数组
 
         //已配对的设备
-        mPairedDevicesArrayAdapter = new ArrayAdapter<String>(this, R.layout.device_name);
+        mPairedDevicesArrayAdapter = new ArrayAdapter<>(this, R.layout.device_name);
         //新查找的设备
-        mNewDevicesArrayAdapter = new ArrayAdapter<String>(this, R.layout.device_name);
+        mNewDevicesArrayAdapter = new ArrayAdapter<>(this, R.layout.device_name);
 
         // 设置已配队设备列表
         ListView pairedListView = (ListView) findViewById(R.id.paired_devices);
@@ -84,6 +83,10 @@ public class DeviceListActivity extends Activity {
 
     }
 
+
+    /**
+     * Activity销毁时调用
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -97,6 +100,10 @@ public class DeviceListActivity extends Activity {
         this.unregisterReceiver(mReceiver);
     }
 
+    /**
+     * 取消按钮点击事件
+     * @param v
+     */
     public void OnCancel(View v){
         finish();
     }
@@ -120,7 +127,9 @@ public class DeviceListActivity extends Activity {
         mBtAdapter.startDiscovery();
     }
 
-    // 选择设备响应函数
+    /**
+     * 设备列表中的列表项点击响应函数
+     */
     private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
             // 准备连接设备，关闭服务查找
@@ -140,8 +149,10 @@ public class DeviceListActivity extends Activity {
         }
     };
 
-    // 查找到设备和搜索完成action监听器
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    /**
+     * 查找到设备和搜索完成时的action监听器
+     */
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();

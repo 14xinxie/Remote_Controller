@@ -40,13 +40,35 @@
             android:layout_marginTop="80dp"
             />
 
-        <Button
-            android:id="@+id/switch_button"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/switch_on"
-            android:layout_centerHorizontal="true"
-            />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+            <Button
+                android:id="@+id/slow_button"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/slow"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="10dp"
+                />
+            <Button
+                android:id="@+id/switch_button"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/switch_on"
+                android:layout_centerHorizontal="true"
+                />
+            <Button
+                android:id="@+id/speed_button"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/speed"
+                android:layout_marginRight="10dp"
+                android:layout_alignParentRight="true"
+                />
+        </RelativeLayout>
+
 
     </RelativeLayout>
 

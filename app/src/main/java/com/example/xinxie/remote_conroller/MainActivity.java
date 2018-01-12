@@ -80,8 +80,10 @@ public class MainActivity extends AppCompatActivity {
     //退出时的时间
     private long mExitTime;
 
+
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
@@ -180,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 初始化数据
      */
-    public void initData(){
+    private void initData(){
         sp = getSharedPreferences("config", 0);
         editor = sp.edit();
 
@@ -189,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 初始化视图
      */
-    public void initView(){
+    private void initView(){
 
         mainToolbar=(Toolbar) findViewById(R.id.main_toolbar);
         //将Toolbar标题栏中的标题内容设置为空
@@ -243,8 +245,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-    //对返回键进行监听
+    /**
+     * 重写home键的监听事件
+     * @param keyCode
+     * @param event
+     * @return
+     */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
@@ -257,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //退出程序
-    public void exit() {
+    private void exit() {
         if ((System.currentTimeMillis() - mExitTime) > 2000) {
             PromptUtil.showShortToast("再按一次退出程序");
             mExitTime = System.currentTimeMillis();
@@ -326,21 +332,15 @@ public class MainActivity extends AppCompatActivity {
      * @param resultCode
      * @param data
      */
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode,resultCode,data);
     }
 
-
-    //关闭程序掉用处理部分
-    public void onDestroy(){
+    //Activity销毁时调用
+    protected void onDestroy(){
         super.onDestroy();
         //在界面销毁的地方要解绑
         EventBus.getDefault().unregister(this);
-
     }
-
-
-
-
 
 }

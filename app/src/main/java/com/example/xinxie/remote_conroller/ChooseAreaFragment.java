@@ -221,7 +221,7 @@ public class ChooseAreaFragment extends Fragment {
     /**
      * 根据传入的地址和类型从服务器上查询省市县数据。
      */
-    public void queryFromServer(String address, final String type) {
+    private void queryFromServer(String address, final String type) {
 
         //getActivity()有可能为空，需要提前判断
         if(getActivity()==null){
@@ -277,4 +277,12 @@ public class ChooseAreaFragment extends Fragment {
         });
     }
 
+
+    /**
+     * Fragment销毁时调用
+     */
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
 }

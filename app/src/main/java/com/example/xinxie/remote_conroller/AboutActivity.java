@@ -77,4 +77,13 @@ public class AboutActivity extends AppCompatActivity {
         startActivity(intent);//跳转至MainActivity
         finish();
     }
+
+
+    /**
+     * Activity销毁时调用
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }
