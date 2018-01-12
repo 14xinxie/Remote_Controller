@@ -30,7 +30,6 @@ import java.util.UUID;
  */
 public class ControllFragment extends Fragment {
 
-    //private String TAG="ControllFragment";
 
     private final static int REQUEST_CONNECT_DEVICE = 1;    //宏定义查询设备标志
 
