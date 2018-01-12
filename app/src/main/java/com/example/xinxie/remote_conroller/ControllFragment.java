@@ -385,7 +385,7 @@ public class ControllFragment extends Fragment {
 
                     //如果短时间没有数据，
                     //则利用Handler发送消息通知UI线程显示接收的数据
-                    if(s.length()==3){
+                    if(s.length()==4){
 
                         //需要数据传递，用下面方法；
                         Message msg = new Message();
