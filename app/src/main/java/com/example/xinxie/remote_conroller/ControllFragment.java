@@ -119,11 +119,9 @@ public class ControllFragment extends Fragment {
         // 设置三格代表温度1度
         tempControl.setAngleRate(3);
 
-        //设置温度表中的最大温度,最小温度和当前温度
+        //设置温度表中的最大温度,最小温度和当前温度(初始默认显示最小温度)
 
-        for (int i = 15; i <= 40; i++) {
-            tempControl.setTemp(15, 40, i);
-        }
+        tempControl.setTemp(10, 40, 10);
 
         tempControl.setOnTempChangeListener(new TempControlView.OnTempChangeListener() {
             @Override
@@ -201,12 +199,14 @@ public class ControllFragment extends Fragment {
                         editor.putString("switch", "off");
                         editor.apply();
                         btn_switch.setBackgroundResource(R.drawable.switch_off);
-                        sendCommand("1");//发送"1"代表开启温控模式
+                        sendCommand("1");//发送"1"代表开启手动模式
+                        PromptUtil.showShortToast("已开启手动模式");
                     }else{
                         editor.putString("switch", "on");
                         editor.apply();
                         btn_switch.setBackgroundResource(R.drawable.switch_on);
-                        sendCommand("0");//发送"0"代表开启手动模式
+                        sendCommand("0");//发送"0"代表开启温控模式
+                        PromptUtil.showShortToast("已开启温控模式");
                     }
                 }else{
 
@@ -268,11 +268,16 @@ public class ControllFragment extends Fragment {
                 super.handleMessage(msg);
 
                 //获取单片机端发送过来的温度值
-                //将字符串转为浮点型，然后再强制转换为整型
-                int temp=(int)Float.parseFloat(msg.obj.toString());
+                //将字符串转为浮点型，
+                float value=Float.parseFloat(msg.obj.toString());
+                //然后再强制转换为整型
+                int temp=(int)value;
 
                 //改变自定义温度控件上显示的温度
-                tempControl.setTemp(15, 40, temp);
+                //使其显示温度传感器的实时温度
+                tempControl.setTemp(10, 40, temp);
+
+                //PromptUtil.showShortToast("接收到的数据为："+msg.obj.toString());
 
 
             }
