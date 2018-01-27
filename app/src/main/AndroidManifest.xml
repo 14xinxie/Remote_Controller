@@ -77,6 +77,11 @@
             android:enabled="true"
             android:process=":remote"
             />
+        <!--注册自动更新服务AutoUpdateService-->
+        <service
+            android:name=".service.AutoUpdateService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

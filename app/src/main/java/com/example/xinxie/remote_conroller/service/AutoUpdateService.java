@@ -10,6 +10,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
 
+import com.example.xinxie.remote_conroller.WeatherFragment;
 import com.example.xinxie.remote_conroller.gson.Weather;
 import com.example.xinxie.remote_conroller.util.HttpUtil;
 import com.example.xinxie.remote_conroller.util.JsonUtil;
@@ -26,6 +27,8 @@ import okhttp3.Response;
  */
 public class AutoUpdateService extends Service {
 
+
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -34,13 +37,18 @@ public class AutoUpdateService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         updateWeather();
-        //updateBingPic();
+        //PromptUtil.showShortToast("自动更新服务已开启");
+        //AlarmManager对象,注意这里并不是new一个对象，Alarmmanager为系统级服务
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        int anHour = 8 * 60 * 60 * 1000; // 这是8小时的毫秒数
+        int anHour = 60 * 60 * 1000; // 这是8小时的毫秒数
+        //int anHour =  1000;
+        //SystemClock.elapsedRealtime()：获取从设备boot后经历的时间值
         long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
         Intent i = new Intent(this, AutoUpdateService.class);
+        //从系统取得一个用于启动一个Service的PendingIntent对象
         PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
-        manager.cancel(pi);
+
+        //注册一个新的延迟定时器
         manager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pi);
         return super.onStartCommand(intent, flags, startId);
     }
@@ -62,6 +70,8 @@ public class AutoUpdateService extends Service {
                     String responseText = response.body().string();
                     Weather weather = JsonUtil.handleWeatherResponse(responseText);
                     if (weather != null && "ok".equals(weather.status)) {
+
+
                         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(AutoUpdateService.this).edit();
                         editor.putString("weather", responseText);
                         editor.apply();
@@ -74,27 +84,6 @@ public class AutoUpdateService extends Service {
                 }
             });
         }
-    }
-
-    /**
-     * 更新必应每日一图
-     */
-    private void updateBingPic() {
-        String requestBingPic = "http://guolin.tech/api/bing_pic";
-        HttpUtil.sendOkHttpRequest(requestBingPic, new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String bingPic = response.body().string();
-                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(AutoUpdateService.this).edit();
-                editor.putString("bing_pic", bingPic);
-                editor.apply();
-            }
-
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-        });
     }
 
 }

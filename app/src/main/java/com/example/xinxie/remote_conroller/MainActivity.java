@@ -37,6 +37,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.xinxie.remote_conroller.util.HttpUtil;
 import com.example.xinxie.remote_conroller.util.MyApplication;
 import com.example.xinxie.remote_conroller.util.PromptUtil;
 import com.example.xinxie.remote_conroller.view.TempControlView;
@@ -71,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
     //自定义Fragment
     private WeatherFragment weatherFragment;
 
+    private ChooseAreaFragment chooseAreaFragment;
+
     //当前天气信息的代号
     private String mWeatherId;
 
@@ -91,6 +94,11 @@ public class MainActivity extends AppCompatActivity {
 
         //设置画面为主画面 activity_main.xml
         setContentView(R.layout.activity_main);
+
+        if(!HttpUtil.isNetworkAvailable(MyApplication.getContext())){
+
+            PromptUtil.showShortToast("当前网络不可用，请检查你的网络设置");
+        }
 
         initView();
 
@@ -186,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
         sp = getSharedPreferences("config", 0);
         editor = sp.edit();
 
+
     }
 
     /**
@@ -202,7 +211,11 @@ public class MainActivity extends AppCompatActivity {
         //在你要接受EventBus的界面注册
         EventBus.getDefault().register(this);
 
+        //通过id获取WeatherFragment实例
         weatherFragment=(WeatherFragment)getSupportFragmentManager().findFragmentById(R.id.weather_fragment);
+
+        //通过id获取ChooseAreaFragment实例
+        chooseAreaFragment=(ChooseAreaFragment)getSupportFragmentManager().findFragmentById(R.id.choose_area_fragment);
 
         swipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
 
@@ -217,6 +230,12 @@ public class MainActivity extends AppCompatActivity {
         btn_nav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                if(!HttpUtil.isNetworkAvailable(MyApplication.getContext())){
+
+                    PromptUtil.showShortToast("当前网络不可用，请检查你的网络设置");
+                    return;
+                }
                 //这里设置的方向应该跟下面xml文件里面的layout_gravity方向相同
                 //从左往右滑出侧滑菜单
                 drawerLayout.openDrawer(GravityCompat.START);
@@ -228,6 +247,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+                if(!HttpUtil.isNetworkAvailable(MyApplication.getContext())){
+
+                    PromptUtil.showShortToast("当前网络不可用，请检查你的网络设置");
+                    return;
+                }
                 //重置WeatherFragment中的标志位
                 WeatherFragment.locaWeatherFlag=false;
             }
@@ -237,6 +261,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
 
+                if(!HttpUtil.isNetworkAvailable(MyApplication.getContext())){
+
+                    PromptUtil.showShortToast("当前网络不可用，请检查你的网络设置");
+                    swipeRefresh.setRefreshing(false);
+                    return;
+                }
                 //重新请求天气信息，达到刷新的效果
                 weatherFragment.requestWeather(mWeatherId);
             }
@@ -256,6 +286,22 @@ public class MainActivity extends AppCompatActivity {
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
 
+
+            //如果侧滑菜单弹出，则隐藏侧滑菜单
+            if(drawerLayout.isDrawerOpen(GravityCompat.START)){
+
+                //如果还有父菜单，返回父菜单，否则隐藏侧滑菜单
+                if (chooseAreaFragment.currentLevel == chooseAreaFragment.LEVEL_COUNTY) {
+                    chooseAreaFragment.queryCities();
+                } else if (chooseAreaFragment.currentLevel == chooseAreaFragment.LEVEL_CITY) {
+                    chooseAreaFragment.queryProvinces();
+                }else if(chooseAreaFragment.currentLevel== chooseAreaFragment.LEVEL_PROVINCE){
+                    drawerLayout.closeDrawers();
+                }
+
+                return true;
+            }
+
             exit();
             return true;
         }
@@ -265,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
     //退出程序
     private void exit() {
         if ((System.currentTimeMillis() - mExitTime) > 2000) {
-            PromptUtil.showShortToast("再按一次退出程序");
+            PromptUtil.showShortToast("再按一次返回键，退出程序");
             mExitTime = System.currentTimeMillis();
         } else {
             finish();//结束当前Activity

@@ -16,6 +16,7 @@ import com.example.xinxie.remote_conroller.db.County;
 import com.example.xinxie.remote_conroller.db.Province;
 import com.example.xinxie.remote_conroller.util.HttpUtil;
 import com.example.xinxie.remote_conroller.util.JsonUtil;
+import com.example.xinxie.remote_conroller.util.MyApplication;
 import com.example.xinxie.remote_conroller.util.PromptUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.litepal.crud.DataSupport;
@@ -64,7 +65,7 @@ public class ChooseAreaFragment extends Fragment {
     private City selectedCity;
 
     //当前选中的级别
-    private int currentLevel;
+    public int currentLevel;
 
     /**
      * 每次创建、绘制该Fragment的View组件时回调该方法
@@ -104,6 +105,7 @@ public class ChooseAreaFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
                 if (currentLevel == LEVEL_PROVINCE) {
                     selectedProvince = provinceList.get(position);
                     queryCities();
@@ -153,8 +155,9 @@ public class ChooseAreaFragment extends Fragment {
 
     /**
      * 查询全国所有的省，优先从数据库查询，如果没有查询到再去服务器上查询。
+     * 由于该方法需要在MainActivity中调用，所以声明为public
      */
-    private void queryProvinces() {
+    public void queryProvinces() {
         titleText.setText("中国");
         backButton.setVisibility(View.GONE);
         provinceList = DataSupport.findAll(Province.class);
@@ -174,8 +177,9 @@ public class ChooseAreaFragment extends Fragment {
 
     /**
      * 查询选中省内所有的市，优先从数据库查询，如果没有查询到再去服务器上查询。
+     * 由于该方法需要在MainActivity中调用，所以声明为public
      */
-    private void queryCities() {
+    public void queryCities() {
         titleText.setText(selectedProvince.getProvinceName());
         backButton.setVisibility(View.VISIBLE);
         cityList = DataSupport.where("provinceId = ?", String.valueOf(selectedProvince.getId())).find(City.class);
@@ -229,13 +233,18 @@ public class ChooseAreaFragment extends Fragment {
             PromptUtil.showShortToast("服务器繁忙，请稍后重试！");
             return;
         }
+        if(!HttpUtil.isNetworkAvailable(MyApplication.getContext())){
+            PromptUtil.showShortToast("当前网络不可用，请检查你的网络设置");
+            return;
+        }
+
 
         PromptUtil.showProgressDialog("正在加载...",getActivity());
         HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String responseText = response.body().string();
-                    boolean result = false;
+                boolean result = false;
                 if ("province".equals(type)) {
                     result = JsonUtil.handleProvinceResponse(responseText);
                 } else if ("city".equals(type)) {

@@ -3,6 +3,9 @@ package com.example.xinxie.remote_conroller;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -13,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
@@ -123,8 +128,6 @@ public class WeatherFragment extends Fragment {
 
             //没有缓存时获取当前位置的天气信息
             //即设置定位标志位为false,开启定位
-
-            //执行耗时的定位方法
             locaWeatherFlag=false;
 
         }
@@ -278,8 +281,6 @@ public class WeatherFragment extends Fragment {
         String weatherInfo = weather.now.more.info;
         String mWeatherPictureId=weather.now.more.pictureId;
 
-
-
         titleCity.setText(cityName);
         titleUpdateTime.setText(updateTime);
         degreeText.setText(degree);
@@ -287,13 +288,43 @@ public class WeatherFragment extends Fragment {
 
         //网络图片的请求Url
         String requestWeatherPic = "https://cdn.heweather.com/cond_icon/"+mWeatherPictureId+".png";
-        //加载实时天气状况的图片
+        //使用OKHttp网络框架加载实时天气状况的图片
+        HttpUtil.sendOkHttpRequest(requestWeatherPic, new Callback() {
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
 
-        //使用Glide开源框架加载图片
-        Glide.with(getActivity()).load(requestWeatherPic).into(weatherPicImg);
+                if(response.isSuccessful()){
 
+                    //获取响应的网络图片，并将其转换为二进制图片，即字节数组形式
+                    byte[] bytes=response.body().bytes();
 
+                    //将字节数组转换成位图
+                    final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            weatherPicImg.setImageBitmap(bitmap);
+                            PromptUtil.showShortToast("图片加载成功！");
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, final IOException e) {
+
+                e.printStackTrace();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        PromptUtil.showShortToast("图片加载失败！"+e.getMessage());
+                    }
+                });
+            }
+        });
+
+        //开启自动更新服务
         Intent intent = new Intent(getActivity(), AutoUpdateService.class);
         getActivity().startService(intent);
     }

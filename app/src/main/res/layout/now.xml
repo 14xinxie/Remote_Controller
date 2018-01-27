@@ -21,7 +21,6 @@
         android:id="@+id/weather_pic_img"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/failure_load"
         android:layout_centerHorizontal="true"
         />
 
