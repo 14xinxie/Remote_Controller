@@ -12,17 +12,20 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.example.xinxie.remote_conroller.util.MyApplication;
 import com.example.xinxie.remote_conroller.util.PromptUtil;
 import com.example.xinxie.remote_conroller.view.TempControlView;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.spec.ECField;
 import java.util.UUID;
 
 /**
@@ -30,7 +33,7 @@ import java.util.UUID;
  */
 public class ControllFragment extends Fragment {
 
-
+    private String TAG="ControllFragment";
     private final static int REQUEST_CONNECT_DEVICE = 1;    //宏定义查询设备标志
 
     private final static String MY_UUID = "00001101-0000-1000-8000-00805F9B34FB";
@@ -83,6 +86,8 @@ public class ControllFragment extends Fragment {
 
         tempControl = (TempControlView)view.findViewById(R.id.temp_control);
 
+
+        Log.e(TAG,"onCreateView...");
         return view;
     }
 
@@ -157,29 +162,33 @@ public class ControllFragment extends Fragment {
                 if (socket==null) {
                     Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class); //跳转程序设置
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);  //设置返回宏定义
-                } else {
 
+                    //socket.isConnected()方法判断是否已经连接上蓝牙设备
+                } else if(socket.isConnected()){
 
-                    //关闭连接socket
-                    try {
-                        //关闭资源
-                        is.close();//关闭输入流
-                        socket.close();//关闭socket
-                        socket=null;    //socket赋值为null,否则不能进行第二次蓝牙连接
-                        readRun = false;//停止接收数据线程
-                        btn_connect.setBackgroundResource(R.drawable.connect_on);
-                        btn_connect.setText("连接");
+                        //关闭连接socket
+                        try {
 
-                        btn_switch.setBackgroundResource(R.drawable.switch_on);
+                            //关闭资源
+                            is.close();//关闭输入流
+                            socket.close();//关闭socket
+                            socket=null;    //socket赋值为null,否则不能进行第二次蓝牙连接
+                            readRun = false;//停止接收数据线程
+                            btn_connect.setBackgroundResource(R.drawable.connect_on);
+                            btn_connect.setText("连接");
 
-                        editor.putString("switch","on");
+                            btn_switch.setBackgroundResource(R.drawable.switch_on);
 
-                        editor.putBoolean("isConnected", false);
-                        editor.apply();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                            editor.putString("switch","on");
 
+                            editor.putBoolean("isConnected", false);
+                            editor.apply();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                }else{
+                    socket=null;    //socket赋值为null,否则不能进行第二次蓝牙连接
                 }
                 return;
             }
@@ -283,17 +292,28 @@ public class ControllFragment extends Fragment {
             }
         };
 
+        Log.e(TAG,"onActivityCreated...");
+
     }
 
+    /**
+     * 接收活动结果，响应startActivityForResult()
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case REQUEST_CONNECT_DEVICE:     //连接结果，由DeviceListActivity设置返回
+            case REQUEST_CONNECT_DEVICE:     //查询蓝牙设备的请求码，由MainActivity设置返回
                 // 响应返回结果
-                if (resultCode == Activity.RESULT_OK) {   //连接成功，由DeviceListActivity设置返回
+                if (resultCode == Activity.RESULT_OK) {   //返回结果，由DeviceListActivity设置返回
+
+
                     // MAC地址，由DeviceListActivity设置返回
                     String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+
                     // 通过本地蓝牙设备得到远程蓝牙设备
                     device = bluetooth.getRemoteDevice(address);
 
@@ -301,7 +321,20 @@ public class ControllFragment extends Fragment {
                         //根据UUID 创建并返回一个BluetoothSocket
                         socket = device.createRfcommSocketToServiceRecord(UUID.fromString(MY_UUID));
                     } catch (IOException e) {
-                        PromptUtil.showShortToast("连接失败！");
+
+                        try{
+                            //Thread.sleep(2000);
+
+                            PromptUtil.showShortToast("连接失败！");
+                            PromptUtil.closeProgressDialog();
+                            socket.close();
+                            socket=null;//socket赋值为null,否则不能进行第二次蓝牙连接
+                        }catch (Exception e1){
+
+                            PromptUtil.showShortToast("连接失败！");
+                            PromptUtil.closeProgressDialog();
+                        }
+                        return;
                     }
 
                     try {
@@ -317,13 +350,18 @@ public class ControllFragment extends Fragment {
                     } catch (IOException e) {
 
                         try {
+                            //Thread.sleep(2000);
 
                             PromptUtil.showShortToast("连接失败！");
+                            PromptUtil.closeProgressDialog();
                             socket.close();
+                            socket=null;//socket赋值为null,否则不能进行第二次蓝牙连接
 
-                        } catch (IOException e1) {
+                        } catch (Exception e1) {
 
                             PromptUtil.showShortToast("连接失败！");
+                            PromptUtil.closeProgressDialog();
+
                         }
                         return;
                     }

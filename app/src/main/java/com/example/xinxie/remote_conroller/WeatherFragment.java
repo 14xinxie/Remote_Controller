@@ -62,7 +62,7 @@ public class WeatherFragment extends Fragment {
     //位置监听实例
     private MyLocationListener myLocationListener;
 
-    private LocationClient mLocationClient = null;
+    private LocationClient mLocationClient;
 
     //获取当前位置天气信息的标志位
     //static boolean得默认值为false
@@ -71,7 +71,11 @@ public class WeatherFragment extends Fragment {
     //实时天气状况图片
     private ImageView weatherPicImg;
 
+    //暂存当前天气信息的Id的中间变量
+    private String temWeatherId=null;
 
+    //判断是否切换城市的标志位
+    private boolean isSwitch;
     /**
      * 每次创建、绘制该Fragment的View组件时回调该方法
      * Fragment将会显示该方法返回的View组件。
@@ -86,15 +90,14 @@ public class WeatherFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        view = inflater.inflate(R.layout.weather_fragment, container, false);
-        titleCity = (TextView) view.findViewById(R.id.title_city);
-        titleUpdateTime = (TextView) view.findViewById(R.id.title_update_time);
-        weatherInfoText = (TextView) view.findViewById(R.id.weather_info_text);
-        degreeText = (TextView) view.findViewById(R.id.degree_text);
-        weatherPicImg = (ImageView) view.findViewById(R.id.weather_pic_img);
+            view = inflater.inflate(R.layout.weather_fragment, container, false);
+            titleCity = (TextView) view.findViewById(R.id.title_city);
+            titleUpdateTime = (TextView) view.findViewById(R.id.title_update_time);
+            weatherInfoText = (TextView) view.findViewById(R.id.weather_info_text);
+            degreeText = (TextView) view.findViewById(R.id.degree_text);
+            weatherPicImg = (ImageView) view.findViewById(R.id.weather_pic_img);
 
         Log.e(TAG,"onCreateView...");
-
         return view;
     }
 
@@ -109,12 +112,9 @@ public class WeatherFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String weatherString = prefs.getString("weather", null);
-
         startLocate();
-
         if (weatherString != null) {
             // 有缓存时直接解析天气数据
             Weather weather = JsonUtil.handleWeatherResponse(weatherString);
@@ -131,10 +131,22 @@ public class WeatherFragment extends Fragment {
             locaWeatherFlag=false;
 
         }
+
         Log.e(TAG,"onActivityCreated...");
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Log.e(TAG,"onResume...");
+
+//        //getUserVisibleHint()方法判断当前Fragment对于用户是否可见
+//        if(getUserVisibleHint()){
+//            PromptUtil.showShortToast("可见");
+//        }
+    }
 
     /**
      * 根据天气id请求城市天气信息。
@@ -143,6 +155,16 @@ public class WeatherFragment extends Fragment {
     protected void requestWeather(final String weatherId) {
 
         final MainActivity mActivity=(MainActivity) getActivity();
+
+        if(!weatherId.equals(temWeatherId)){
+            //PromptUtil.showShortToast("切换城市成功");
+            //暂存天气信息的Id
+            temWeatherId=weatherId;
+            isSwitch=true; //置切换城市标志位为true
+
+        }else{
+            isSwitch=false;
+        }
 
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
         //getActivity()有可能为空，需要提前判断
@@ -158,7 +180,6 @@ public class WeatherFragment extends Fragment {
         //这一段时间程序继续向下执行
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
 
-
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String responseText = response.body().string();
@@ -168,15 +189,59 @@ public class WeatherFragment extends Fragment {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
+                            SharedPreferences sp=PreferenceManager.getDefaultSharedPreferences(getActivity());
                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-                            editor.putString("weather", responseText);
-                            editor.apply();
-                            mWeatherId = weather.basic.weatherId;
+                            if(sp.getString("weather",null)!=null){
 
-                            //发送mWeatherId给MainActivity
-                            EventBus.getDefault().post(mWeatherId);
+                                //如果未切换城市
+                                if(isSwitch==false){
 
-                            showWeatherInfo(weather);
+                                    //如果获取的天气信息和之前存储的天气信息相同
+                                    //则提示暂无更新
+                                    if(sp.getString("weather",null).equals(responseText)){
+                                        mWeatherId = weather.basic.weatherId;
+
+                                        //发送mWeatherId给MainActivity
+                                        EventBus.getDefault().post(mWeatherId);
+                                        PromptUtil.showShortToast("暂无天气信息更新");
+                                    }else{
+
+                                        //如果获取的天气信息和之前存储的天气信息不同
+                                        //则提示天气信息更新成功
+                                        editor.putString("weather", responseText);
+                                        editor.apply();
+                                        mWeatherId = weather.basic.weatherId;
+
+                                        //发送mWeatherId给MainActivity
+                                        EventBus.getDefault().post(mWeatherId);
+
+                                        PromptUtil.showShortToast("天气信息更新成功");
+                                        showWeatherInfo(weather);
+                                    }
+
+                                }else{
+
+                                    //如果已切换城市
+                                    editor.putString("weather", responseText);
+                                    editor.apply();
+                                    mWeatherId = weather.basic.weatherId;
+                                    //发送mWeatherId给MainActivity
+                                    EventBus.getDefault().post(mWeatherId);
+                                    showWeatherInfo(weather);
+
+                                }
+
+                            }else{
+                                editor.putString("weather", responseText);
+                                editor.apply();
+                                mWeatherId = weather.basic.weatherId;
+
+                                //发送mWeatherId给MainActivity
+                                EventBus.getDefault().post(mWeatherId);
+
+                                showWeatherInfo(weather);
+                            }
+
                         } else {
 
                             PromptUtil.showShortToast("获取天气信息失败！");
@@ -214,6 +279,7 @@ public class WeatherFragment extends Fragment {
     private void requestWeather(final double latitude,final double longitude) {
 
 
+        //获取MainActivity实例
         final MainActivity mActivity=(MainActivity) getActivity();
 
         //getActivity()有可能为空，需要提前判断
@@ -234,15 +300,34 @@ public class WeatherFragment extends Fragment {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
+                            SharedPreferences sp=PreferenceManager.getDefaultSharedPreferences(getActivity());
                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
+
+                            if(sp.getString("weather",null)==null){
+                                editor.putString("weather", responseText);
+                                editor.apply();
+                                mWeatherId = weather.basic.weatherId;
+                                PromptUtil.showShortToast("定位中...");
+                                //发送mWeatherId给MainActivity
+                                EventBus.getDefault().post(mWeatherId);
+
+                                showWeatherInfo(weather);
+                            }else if(!(sp.getString("weather",null).equals(responseText))){
+                                editor.putString("weather", responseText);
+                                editor.apply();
+                                PromptUtil.showShortToast("定位中...");
+                                mWeatherId = weather.basic.weatherId;
+
+                                //发送mWeatherId给MainActivity
+                                EventBus.getDefault().post(mWeatherId);
+
+                                showWeatherInfo(weather);
+                            }else{
+                                PromptUtil.showShortToast("已定位到当前城市");
+                            }
                             editor.putString("weather", responseText);
                             editor.apply();
-                            mWeatherId = weather.basic.weatherId;
 
-                            //发送mWeatherId给MainActivity
-                            EventBus.getDefault().post(mWeatherId);
-
-                            showWeatherInfo(weather);
                         } else {
 
                             PromptUtil.showShortToast("获取天气信息失败！");
@@ -253,7 +338,7 @@ public class WeatherFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(Call call, final IOException e) {
                 e.printStackTrace();
 
                 getActivity().runOnUiThread(new Runnable() {
@@ -287,7 +372,7 @@ public class WeatherFragment extends Fragment {
         weatherInfoText.setText(weatherInfo);
 
         //网络图片的请求Url
-        String requestWeatherPic = "https://cdn.heweather.com/cond_icon/"+mWeatherPictureId+".png";
+        String requestWeatherPic = "https://www.heweather.com/files/images/cond_icon/"+mWeatherPictureId+".png";
         //使用OKHttp网络框架加载实时天气状况的图片
         HttpUtil.sendOkHttpRequest(requestWeatherPic, new Callback() {
             @Override
@@ -305,7 +390,7 @@ public class WeatherFragment extends Fragment {
                         @Override
                         public void run() {
                             weatherPicImg.setImageBitmap(bitmap);
-                            PromptUtil.showShortToast("图片加载成功！");
+                            ///PromptUtil.showShortToast("图片加载成功！");
                         }
                     });
                 }
@@ -318,7 +403,7 @@ public class WeatherFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        PromptUtil.showShortToast("图片加载失败！"+e.getMessage());
+                        //PromptUtil.showShortToast("图片加载失败！");
                     }
                 });
             }
@@ -403,7 +488,7 @@ public class WeatherFragment extends Fragment {
 
                 requestWeather(location.getLatitude(), location.getLongitude());
 
-                PromptUtil.showShortToast("定位中...");
+                //PromptUtil.showShortToast("定位中...");
                 locaWeatherFlag = true;
 
             }

@@ -1,8 +1,10 @@
 package com.example.xinxie.remote_conroller.util;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,10 +59,24 @@ public class PromptUtil {
      */
     public static void closeProgressDialog() {
         if (progressDialog != null) {
-            progressDialog.dismiss();
+            if(progressDialog.isShowing()){
+                //get the Context object that was used to great the dialog
+                Context context = ((ContextWrapper)progressDialog.getContext()).getBaseContext();
+
+                //if the Context used here was an activity AND it hasn't been finished or destroyed
+                //then dismiss it
+                if(context instanceof Activity) {
+                    if(!((Activity)context).isFinishing() && !((Activity)context).isDestroyed())
+                        progressDialog.dismiss();
+                } else //if the Context used wasnt an Activity, then dismiss it too
+                    progressDialog.dismiss();
+            }
+                progressDialog = null;
+            }
+
         }
     }
 
-}
+
 
 

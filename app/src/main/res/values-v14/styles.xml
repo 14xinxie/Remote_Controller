@@ -41,7 +41,6 @@
        <item name="android:textSize">24sp</item>
        <item name="android:text">关于</item>
        <item name="android:textStyle">bold</item>
-    </style>  
-    
+    </style>
 
 </resources>

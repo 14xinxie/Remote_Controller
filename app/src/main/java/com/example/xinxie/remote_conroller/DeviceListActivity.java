@@ -1,10 +1,13 @@
 package com.example.xinxie.remote_conroller;
 
 import android.app.Activity;
+import android.app.ExpandableListActivity;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -18,6 +21,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.bumptech.glide.util.ExceptionCatchingInputStream;
+import com.example.xinxie.remote_conroller.util.MyApplication;
+import com.example.xinxie.remote_conroller.util.PromptUtil;
 
 public class DeviceListActivity extends Activity {
 
@@ -96,6 +104,8 @@ public class DeviceListActivity extends Activity {
             mBtAdapter.cancelDiscovery();
         }
 
+
+
         // 注销action接收器
         this.unregisterReceiver(mReceiver);
     }
@@ -107,6 +117,7 @@ public class DeviceListActivity extends Activity {
     public void OnCancel(View v){
         finish();
     }
+
     /**
      * 开始服务和设备查找
      */
@@ -132,9 +143,9 @@ public class DeviceListActivity extends Activity {
      */
     private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
+
             // 准备连接设备，关闭服务查找
             mBtAdapter.cancelDiscovery();
-
             // 得到mac地址
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
@@ -143,8 +154,10 @@ public class DeviceListActivity extends Activity {
             Intent intent = new Intent();
             intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
 
+
             // 设置返回值并结束程序
             setResult(Activity.RESULT_OK, intent);
+            PromptUtil.showProgressDialog("连接中...",DeviceListActivity.this);
             finish();
         }
     };

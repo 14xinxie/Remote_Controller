@@ -95,6 +95,13 @@ public class MainActivity extends AppCompatActivity {
         //设置画面为主画面 activity_main.xml
         setContentView(R.layout.activity_main);
 
+        //为了让闪屏结束后更自然的过度到主界面，
+        //去除主界面的启动动画，将下面函数的第一个参数设为0即可
+        overridePendingTransition(0, 0);
+
+
+
+
         if(!HttpUtil.isNetworkAvailable(MyApplication.getContext())){
 
             PromptUtil.showShortToast("当前网络不可用，请检查你的网络设置");
@@ -145,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
         Log.e(TAG,"onCreate()...");
 
     }
+
 
 
     /**
@@ -269,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 //重新请求天气信息，达到刷新的效果
                 weatherFragment.requestWeather(mWeatherId);
+
             }
         });
 
@@ -369,17 +378,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-
-    /**
-     * 接收活动结果，响应startActivityForResult()
-     * @param requestCode
-     * @param resultCode
-     * @param data
-     */
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode,resultCode,data);
     }
 
     //Activity销毁时调用

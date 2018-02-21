@@ -71,7 +71,6 @@ public class AutoUpdateService extends Service {
                     Weather weather = JsonUtil.handleWeatherResponse(responseText);
                     if (weather != null && "ok".equals(weather.status)) {
 
-
                         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(AutoUpdateService.this).edit();
                         editor.putString("weather", responseText);
                         editor.apply();
